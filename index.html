@@ -53,29 +53,27 @@
 
       .level-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px}
 
-      /* 站內信 */
+      /* 站內信（對齊原型：搜尋條 + 大表格） */
       .msg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
-      .msg-layout{display:grid;grid-template-columns:340px 1fr;gap:12px}
-      .msg-list{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
-      .msg-item{padding:10px;border-bottom:1px solid var(--line);cursor:pointer}
-      .msg-item:hover{background:#f8fafc}
-      .msg-item.active{background:#eff6ff}
-      .msg-item.unread .subject{font-weight:800}
-      .msg-meta{color:var(--soft);font-size:.82rem;display:flex;justify-content:space-between;gap:8px}
-      .subject{margin:6px 0 4px}
-      .preview{color:var(--soft);font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .msg-detail{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px;min-height:560px;display:flex;flex-direction:column}
-      .msg-body{margin-top:8px;line-height:1.7;white-space:pre-wrap}
-      .msg-actions{display:flex;gap:8px;margin-top:auto;padding-top:12px}
-      .badge-unread{background:#fee2e2;color:#b91c1c;border-radius:999px;padding:2px 8px;font-size:.76rem;font-weight:700}
+      .msg-filters{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto auto;gap:10px;margin-bottom:12px}
+      .msg-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+      .msg-table td,.msg-table th{white-space:nowrap;vertical-align:top}
+      .msg-title-cell{max-width:220px;white-space:normal}
+      .msg-content-cell{max-width:360px;white-space:normal;color:var(--soft)}
+      .msg-status-draft{color:#64748b;font-weight:700}
+      .msg-status-scheduled{color:#d97706;font-weight:700}
+      .msg-status-sent{color:#059669;font-weight:700}
+      .msg-status-deleted{color:#dc2626;font-weight:700}
+      .inline-actions{display:flex;gap:6px}
+      .tiny-btn{height:28px;min-width:28px;padding:0 8px;border-radius:8px}
       .compose{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
-      .compose textarea{min-height:110px}
+      .compose textarea{min-height:100px}
 
       @media (max-width:1040px){
         .kpis,.msg-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
         .filters{grid-template-columns:1fr 1fr}
         .level-grid{grid-template-columns:1fr 1fr}
-        .msg-layout{grid-template-columns:1fr}
+        .msg-filters{grid-template-columns:1fr 1fr}
         .drawer{width:92vw}
       }
     </style>
@@ -138,30 +136,65 @@
       <section id="view-messages" class="view">
         <section class="msg-kpis" id="msgKpis"></section>
         <section class="panel">
-          <div class="filters" style="grid-template-columns:2fr 1fr 1fr auto auto auto;">
-            <input id="msgQ" placeholder="搜尋訊息：主旨 / 收件人 / 內容" />
-            <select id="msgStatus"><option value="">狀態（全部）</option><option value="unread">未讀</option><option value="read">已讀</option></select>
-            <select id="msgType"><option value="">類型（全部）</option><option value="system">系統通知</option><option value="campaign">活動訊息</option><option value="service">客服回覆</option></select>
-            <button id="msgReset" class="secondary">重設</button>
-            <button id="msgMarkRead" class="ghost">標記已讀</button>
-            <button id="msgDelete" class="ghost">刪除</button>
+          <div class="msg-filters">
+            <select id="msgStatusFilter"><option value="">站內信狀態（全部）</option><option value="sent">已發送</option><option value="scheduled">預約中</option><option value="draft">草稿</option><option value="deleted">已刪除</option></select>
+            <input id="msgCreator" placeholder="建立者" />
+            <select id="msgTimeType"><option value="createdAt">建立時間</option><option value="sentAt">發送時間</option></select>
+            <input id="msgRangeStart" type="datetime-local" />
+            <input id="msgRangeEnd" type="datetime-local" />
+            <button id="msgSearch">搜尋</button>
+            <button id="msgReset" class="secondary">重置</button>
           </div>
 
-          <div class="msg-layout">
-            <div>
-              <div class="msg-list" id="msgList"></div>
-              <div class="compose">
-                <h4 style="margin:0">發送新站內信（假資料）</h4>
-                <select id="composeTo"></select>
-                <input id="composeSubject" placeholder="主旨" />
-                <select id="composeType"><option value="system">系統通知</option><option value="campaign">活動訊息</option><option value="service">客服回覆</option></select>
-                <textarea id="composeBody" placeholder="請輸入訊息內容"></textarea>
-                <div style="display:flex;justify-content:flex-end;"><button id="composeSend">送出站內信</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="help">可多選後批量刪除；欄位對齊原型：主旨/內容/狀態/已發送人數/建立者/修改者/建立時間/發送時間/操作</div>
+            <div style="display:flex;gap:8px;">
+              <button id="msgCreate">+ 新增站內信</button>
+              <button id="msgBatchDelete" class="ghost">批量刪除</button>
+            </div>
+          </div>
+
+          <div class="msg-table-wrap">
+            <table class="msg-table">
+              <thead>
+                <tr>
+                  <th><input id="msgCheckAll" type="checkbox" /></th>
+                  <th>站內信主旨</th>
+                  <th>站內信內容</th>
+                  <th>站內信狀態</th>
+                  <th>已發送人數</th>
+                  <th>建立者</th>
+                  <th>修改者</th>
+                  <th>建立時間</th>
+                  <th>發送時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="msgRows"></tbody>
+            </table>
+          </div>
+
+          <div class="toolbar">
+            <div id="msgSummary"></div>
+            <div class="pager"><button id="msgPrev">‹</button><span id="msgPageInfo"></span><button id="msgNext">›</button></div>
+          </div>
+
+          <div class="compose">
+            <h4 style="margin:0">新增 / 編輯站內信（假資料）</h4>
+            <div class="form-grid">
+              <input id="composeSubject" placeholder="站內信主旨" />
+              <select id="composeStatus"><option value="sent">已發送</option><option value="scheduled">預約中</option><option value="draft">草稿</option></select>
+              <textarea id="composeBody" placeholder="站內信內容"></textarea>
+              <div style="display:grid;gap:8px;">
+                <input id="composeCreator" placeholder="建立者（例：lvd_rjin_w）" value="lvd_rjin_w" />
+                <input id="composeModifier" placeholder="修改者（例：lvd_rjin_w）" value="lvd_rjin_w" />
+                <input id="composeSentCount" type="number" min="0" placeholder="已發送人數" value="0" />
+                <input id="composeSendAt" type="datetime-local" />
               </div>
             </div>
-
-            <div class="msg-detail" id="msgDetail">
-              <div class="help">請先從左側選一封站內信。</div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <button id="composeClear" class="secondary">清空</button>
+              <button id="composeSend">儲存站內信</button>
             </div>
           </div>
         </section>
@@ -213,28 +246,41 @@
 
       let messages = Array.from({ length: 36 }).map((_, i) => {
         const to = members[i % members.length];
-        const types = ['system','campaign','service'];
-        const t = types[i % 3];
-        const subjects = {
-          system: '帳號安全提醒與異常登入通知',
-          campaign: '本月會員專屬優惠活動通知',
-          service: '客服回覆：您反映的問題已處理'
-        };
+        const statuses = ['sent','scheduled','draft'];
+        const s = statuses[i % 3];
+        const subjectList = [
+          '哈哈哈哈哈哈哈主旨最多顯示到第二行',
+          '主旨預覽支援 emoji ✨',
+          '回右邊',
+          '系統通知：帳號安全提醒',
+          '活動通知：本月會員回饋'
+        ];
+        const bodyList = [
+          '哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈站內信內容最多顯示到第二行……',
+          '站內信內容預覽支援 emoji 與多行文字。',
+          '如果有 emoji 也要顯示在這裡',
+          '此內容為假資料，用於站內信後台操作測試。',
+          '請至活動頁查看完整規則與使用期限。'
+        ];
+        const createdAt = new Date(2025, (i*2)%12, (i*5)%27 + 1, (i*3)%24, (i*7)%60);
+        const sentAt = s === 'sent' ? new Date(createdAt.getTime() + 1000 * 60 * ((i % 12) + 1)) : null;
         return {
           id:`MSG${1000+i}`,
           toId: to.id,
           toName: to.name,
-          type: t,
-          subject: subjects[t],
-          body: `Hi ${to.name}，\n這是一則${t === 'system' ? '系統通知' : t === 'campaign' ? '活動訊息' : '客服訊息'}。\n\n此內容為假資料，用於站內信後台操作測試。`,
-          createdAt: new Date(2025, (i*2)%12, (i*5)%27 + 1, (i*3)%24, (i*7)%60),
-          read: i % 4 !== 0,
-          deleted: false,
-          sender: 'CRM Admin'
+          subject: subjectList[i % subjectList.length],
+          body: bodyList[i % bodyList.length],
+          status: s,
+          sentCount: s === 'sent' ? (5000 + i * 137) : (s === 'scheduled' ? 0 : 0),
+          creator: 'lvd_rjin_w',
+          modifier: i % 3 === 0 ? '-' : 'lvd_rjin_w',
+          createdAt,
+          sentAt,
+          deleted: false
         };
       });
 
-      const state = { page:1, pageSize:10, selectedId:null, editingLevelId:null, activeMsgId:null };
+      const state = { page:1, pageSize:10, selectedId:null, editingLevelId:null, activeMsgId:null, msgPage:1, msgPageSize:8, editingMsgId:null };
       const $ = id => document.getElementById(id);
       const el = {
         tabs:[...document.querySelectorAll('.tab')],
@@ -243,8 +289,10 @@
         drawer:$('drawer'), closeDrawer:$('closeDrawer'), drawerBody:$('drawerBody'), drawerEdit:$('drawerEdit'),
         editMask:$('editMask'), f_name:$('f_name'), f_email:$('f_email'), f_phone:$('f_phone'), f_status:$('f_status'), f_channel:$('f_channel'), f_ltv:$('f_ltv'), f_points:$('f_points'), cancelEdit:$('cancelEdit'), saveEdit:$('saveEdit'),
         lv_name:$('lv_name'), lv_min_ltv:$('lv_min_ltv'), lv_min_points:$('lv_min_points'), lv_color:$('lv_color'), lv_save:$('lv_save'), lv_reset:$('lv_reset'), levelRows:$('levelRows'),
-        msgKpis:$('msgKpis'), msgQ:$('msgQ'), msgStatus:$('msgStatus'), msgType:$('msgType'), msgReset:$('msgReset'), msgMarkRead:$('msgMarkRead'), msgDelete:$('msgDelete'), msgList:$('msgList'), msgDetail:$('msgDetail'),
-        composeTo:$('composeTo'), composeSubject:$('composeSubject'), composeType:$('composeType'), composeBody:$('composeBody'), composeSend:$('composeSend')
+        msgKpis:$('msgKpis'), msgStatusFilter:$('msgStatusFilter'), msgCreator:$('msgCreator'), msgTimeType:$('msgTimeType'), msgRangeStart:$('msgRangeStart'), msgRangeEnd:$('msgRangeEnd'),
+        msgSearch:$('msgSearch'), msgReset:$('msgReset'), msgCreate:$('msgCreate'), msgBatchDelete:$('msgBatchDelete'), msgCheckAll:$('msgCheckAll'), msgRows:$('msgRows'),
+        msgSummary:$('msgSummary'), msgPageInfo:$('msgPageInfo'), msgPrev:$('msgPrev'), msgNext:$('msgNext'),
+        composeSubject:$('composeSubject'), composeStatus:$('composeStatus'), composeBody:$('composeBody'), composeCreator:$('composeCreator'), composeModifier:$('composeModifier'), composeSentCount:$('composeSentCount'), composeSendAt:$('composeSendAt'), composeClear:$('composeClear'), composeSend:$('composeSend')
       };
 
       const fmtDate = d => d.toISOString().slice(0,10);
@@ -252,7 +300,7 @@
       const fmtMoney = n => `NT$ ${Number(n).toLocaleString()}`;
       const orderedLevels = () => [...levels].sort((a,b) => (b.minLtv+b.minPoints) - (a.minLtv+a.minPoints));
       const selectedMember = () => members.find(m => m.id === state.selectedId) || null;
-      const selectedMessage = () => messages.find(m => m.id === state.activeMsgId) || null;
+      const selectedMessage = () => messages.find(m => m.id === state.activeMsgId) || null; // legacy helper
 
       function evalTier(m){ return orderedLevels().find(l => m.ltv >= +l.minLtv && m.points >= +l.minPoints) || orderedLevels().at(-1); }
       function tierBadge(l){ return `<span class="tag" style="background:${l.color}22;color:${l.color};border:1px solid ${l.color}55">${l.name}</span>`; }
@@ -340,58 +388,77 @@
       }
 
       function getFilteredMessages(){
-        const q = el.msgQ.value.trim().toLowerCase();
-        return messages.filter(m => !m.deleted)
-          .filter(m => !el.msgStatus.value || (el.msgStatus.value==='unread' ? !m.read : m.read))
-          .filter(m => !el.msgType.value || m.type===el.msgType.value)
-          .filter(m => !q || `${m.subject} ${m.toName} ${m.body}`.toLowerCase().includes(q))
-          .sort((a,b)=> b.createdAt - a.createdAt);
+        const creator = el.msgCreator.value.trim().toLowerCase();
+        const status = el.msgStatusFilter.value;
+        const timeField = el.msgTimeType.value || 'createdAt';
+        const s = el.msgRangeStart.value ? new Date(el.msgRangeStart.value) : null;
+        const e = el.msgRangeEnd.value ? new Date(el.msgRangeEnd.value) : null;
+
+        return messages
+          .filter(m => status ? m.status === status : true)
+          .filter(m => creator ? (m.creator || '').toLowerCase().includes(creator) : true)
+          .filter(m => {
+            const t = m[timeField];
+            if (!t) return !s && !e;
+            return (!s || t >= s) && (!e || t <= e);
+          })
+          .sort((a,b) => b.createdAt - a.createdAt);
       }
 
       function renderMsgKpis(){
-        const list = messages.filter(m => !m.deleted);
-        const unread = list.filter(m => !m.read).length;
-        const system = list.filter(m => m.type==='system').length;
-        const campaign = list.filter(m => m.type==='campaign').length;
-        const service = list.filter(m => m.type==='service').length;
+        const list = messages;
+        const sent = list.filter(m => m.status==='sent').length;
+        const scheduled = list.filter(m => m.status==='scheduled').length;
+        const draft = list.filter(m => m.status==='draft').length;
+        const deleted = list.filter(m => m.status==='deleted').length;
         el.msgKpis.innerHTML = `
           <div class="kpi"><div class="l">站內信總數</div><div class="v">${list.length}</div></div>
-          <div class="kpi"><div class="l">未讀訊息</div><div class="v">${unread}</div></div>
-          <div class="kpi"><div class="l">系統通知</div><div class="v">${system}</div></div>
-          <div class="kpi"><div class="l">活動/客服</div><div class="v">${campaign + service}</div></div>`;
+          <div class="kpi"><div class="l">已發送</div><div class="v">${sent}</div></div>
+          <div class="kpi"><div class="l">預約中 / 草稿</div><div class="v">${scheduled + draft}</div></div>
+          <div class="kpi"><div class="l">已刪除</div><div class="v">${deleted}</div></div>`;
+      }
+
+      function statusLabel(s){
+        if (s==='sent') return '<span class="msg-status-sent">已發送</span>';
+        if (s==='scheduled') return '<span class="msg-status-scheduled">預約中</span>';
+        if (s==='draft') return '<span class="msg-status-draft">草稿</span>';
+        return '<span class="msg-status-deleted">已刪除</span>';
       }
 
       function renderMessages(){
         renderMsgKpis();
         const list = getFilteredMessages();
-        if(state.activeMsgId && !list.some(x=>x.id===state.activeMsgId)) state.activeMsgId = null;
+        const total = list.length;
+        const pages = Math.max(1, Math.ceil(total / state.msgPageSize));
+        if (state.msgPage > pages) state.msgPage = pages;
+        const start = (state.msgPage - 1) * state.msgPageSize;
+        const pageItems = list.slice(start, start + state.msgPageSize);
 
-        el.msgList.innerHTML = list.map(m => `
-          <div class="msg-item ${!m.read?'unread':''} ${state.activeMsgId===m.id?'active':''}" data-id="${m.id}">
-            <div class="msg-meta"><span>${m.toName} (${m.toId})</span><span>${fmtDateTime(m.createdAt)}</span></div>
-            <div class="subject">${m.subject}</div>
-            <div class="preview">${m.body.replace(/\n/g,' ')}</div>
-            <div class="msg-meta" style="margin-top:6px;">
-              <span>${m.type}</span>
-              ${!m.read ? '<span class="badge-unread">未讀</span>' : '<span>已讀</span>'}
-            </div>
-          </div>`
-        ).join('') || `<div class="msg-item"><div class="help">沒有符合條件的訊息</div></div>`;
+        el.msgRows.innerHTML = pageItems.map(m => `
+          <tr>
+            <td><input type="checkbox" class="msg-check" data-id="${m.id}" /></td>
+            <td class="msg-title-cell">${m.subject}</td>
+            <td class="msg-content-cell">${m.body}</td>
+            <td>${statusLabel(m.status)}</td>
+            <td>${m.status === 'sent' ? Number(m.sentCount || 0).toLocaleString() : '-'}</td>
+            <td>${m.creator || '-'}</td>
+            <td>${m.modifier || '-'}</td>
+            <td>${fmtDateTime(m.createdAt)}</td>
+            <td>${m.sentAt ? fmtDateTime(m.sentAt) : '-'}</td>
+            <td>
+              <div class="inline-actions">
+                <button class="ghost tiny-btn msg-view" data-id="${m.id}">👁</button>
+                <button class="ghost tiny-btn msg-edit" data-id="${m.id}">✎</button>
+                <button class="secondary tiny-btn msg-del" data-id="${m.id}">🗑</button>
+              </div>
+            </td>
+          </tr>`
+        ).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
 
-        const m = selectedMessage();
-        el.msgDetail.innerHTML = m ? `
-          <div class="msg-meta"><span>收件人：${m.toName} (${m.toId})</span><span>${fmtDateTime(m.createdAt)}</span></div>
-          <h3 style="margin:8px 0 4px;">${m.subject}</h3>
-          <div class="msg-meta"><span>類型：${m.type}</span><span>發送者：${m.sender}</span></div>
-          <div class="msg-body">${m.body}</div>
-          <div class="msg-actions">
-            <button id="detailToggleRead" class="ghost">${m.read ? '標為未讀' : '標為已讀'}</button>
-            <button id="detailDelete" class="secondary">刪除訊息</button>
-          </div>`
-          : `<div class="help">請先從左側選一封站內信。</div>`;
-
-        // 同步收件人下拉（和會員資料同步）
-        el.composeTo.innerHTML = members.map(m=>`<option value="${m.id}">${m.name} (${m.id})</option>`).join('');
+        el.msgSummary.textContent = `共 ${total} 筆，顯示 ${total ? start + 1 : 0}-${Math.min(start + state.msgPageSize, total)} 筆`;
+        el.msgPageInfo.textContent = `${state.msgPage} / ${pages}`;
+        el.msgPrev.disabled = state.msgPage <= 1;
+        el.msgNext.disabled = state.msgPage >= pages;
       }
 
       function openEditMember(id){
@@ -449,14 +516,28 @@
         const ld=e.target.closest('.lv-del');
         if(ld){if(levels.length<=1) return alert('至少要保留一個會員等級'); levels=levels.filter(x=>x.id!==ld.dataset.id); renderLevels(); renderMembers();}
 
-        const mi=e.target.closest('.msg-item');
-        if(mi){state.activeMsgId=mi.dataset.id; const m=selectedMessage(); if(m) m.read=true; renderMessages();}
-
-        if(e.target.id==='detailToggleRead'){
-          const m=selectedMessage(); if(!m)return; m.read=!m.read; renderMessages();
+        const msgView = e.target.closest('.msg-view');
+        if(msgView){
+          const m = messages.find(x=>x.id===msgView.dataset.id); if(!m) return;
+          alert(`【${m.subject}】\n\n${m.body}`);
         }
-        if(e.target.id==='detailDelete'){
-          const m=selectedMessage(); if(!m)return; m.deleted=true; state.activeMsgId=null; renderMessages();
+        const msgEdit = e.target.closest('.msg-edit');
+        if(msgEdit){
+          const m = messages.find(x=>x.id===msgEdit.dataset.id); if(!m) return;
+          state.editingMsgId = m.id;
+          el.composeSubject.value = m.subject;
+          el.composeBody.value = m.body;
+          el.composeStatus.value = m.status;
+          el.composeCreator.value = m.creator || 'lvd_rjin_w';
+          el.composeModifier.value = 'lvd_rjin_w';
+          el.composeSentCount.value = Number(m.sentCount || 0);
+          el.composeSendAt.value = m.sentAt ? new Date(m.sentAt.getTime() - m.sentAt.getTimezoneOffset()*60000).toISOString().slice(0,16) : '';
+        }
+        const msgDel = e.target.closest('.msg-del');
+        if(msgDel){
+          const m = messages.find(x=>x.id===msgDel.dataset.id); if(!m) return;
+          m.status = 'deleted';
+          renderMessages();
         }
       });
 
@@ -469,29 +550,59 @@
       });
       el.lv_reset.addEventListener('click',()=>{state.editingLevelId=null; el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed';});
 
-      [el.msgQ, el.msgStatus, el.msgType].forEach(x=>x.addEventListener('input',renderMessages));
-      el.msgReset.addEventListener('click',()=>{el.msgQ.value='';el.msgStatus.value='';el.msgType.value='';renderMessages()});
-      el.msgMarkRead.addEventListener('click',()=>{const m=selectedMessage(); if(m){m.read=true; renderMessages();}});
-      el.msgDelete.addEventListener('click',()=>{const m=selectedMessage(); if(m){m.deleted=true; state.activeMsgId=null; renderMessages();}});
+      el.msgSearch.addEventListener('click',()=>{state.msgPage=1;renderMessages();});
+      el.msgReset.addEventListener('click',()=>{
+        el.msgStatusFilter.value=''; el.msgCreator.value=''; el.msgTimeType.value='createdAt'; el.msgRangeStart.value=''; el.msgRangeEnd.value='';
+        state.msgPage=1; renderMessages();
+      });
+      el.msgPrev.addEventListener('click',()=>{if(state.msgPage>1){state.msgPage--;renderMessages();}});
+      el.msgNext.addEventListener('click',()=>{state.msgPage++;renderMessages();});
+      el.msgCheckAll.addEventListener('change',()=>{
+        document.querySelectorAll('.msg-check').forEach(c=> c.checked = el.msgCheckAll.checked);
+      });
+      el.msgBatchDelete.addEventListener('click',()=>{
+        const ids = [...document.querySelectorAll('.msg-check:checked')].map(x=>x.dataset.id);
+        if(!ids.length) return alert('請先勾選要刪除的站內信');
+        messages.forEach(m=>{ if(ids.includes(m.id)) m.status='deleted'; });
+        el.msgCheckAll.checked = false;
+        renderMessages();
+      });
+      el.msgCreate.addEventListener('click',()=>{
+        state.editingMsgId = null;
+        el.composeSubject.value=''; el.composeBody.value=''; el.composeStatus.value='sent'; el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+      });
+
+      el.composeClear.addEventListener('click',()=>{
+        state.editingMsgId = null;
+        el.composeSubject.value=''; el.composeBody.value=''; el.composeStatus.value='sent'; el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+      });
 
       el.composeSend.addEventListener('click',()=>{
-        const toId = el.composeTo.value;
-        const to = members.find(m=>m.id===toId);
         const subject = el.composeSubject.value.trim();
         const body = el.composeBody.value.trim();
-        if(!to || !subject || !body) return alert('請填寫收件人、主旨與內容');
-        messages.unshift({
-          id:`MSG${10000 + Math.floor(Math.random()*90000)}`,
-          toId: to.id,
-          toName: to.name,
-          type: el.composeType.value,
+        if(!subject || !body) return alert('請填寫站內信主旨與內容');
+        const payload = {
+          id: state.editingMsgId || `MSG${10000 + Math.floor(Math.random()*90000)}`,
           subject,
           body,
+          status: el.composeStatus.value,
+          sentCount: Number(el.composeSentCount.value || 0),
+          creator: el.composeCreator.value.trim() || 'lvd_rjin_w',
+          modifier: el.composeModifier.value.trim() || 'lvd_rjin_w',
           createdAt: new Date(),
-          read: false,
-          deleted: false,
-          sender: 'CRM Admin'
-        });
+          sentAt: el.composeSendAt.value ? new Date(el.composeSendAt.value) : null,
+          toId: '-',
+          toName: '全部代理',
+          deleted: false
+        };
+        const idx = messages.findIndex(x=>x.id===payload.id);
+        if(idx>=0){
+          messages[idx] = { ...messages[idx], ...payload, createdAt: messages[idx].createdAt };
+        } else {
+          if(payload.status==='sent' && !payload.sentAt) payload.sentAt = new Date();
+          messages.unshift(payload);
+        }
+        state.editingMsgId = null;
         el.composeSubject.value=''; el.composeBody.value='';
         renderMessages();
       });
