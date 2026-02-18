@@ -217,7 +217,10 @@
         <div class="help" style="margin:8px 0 12px;">欄位與流程參考你提供的原型彈窗。</div>
 
         <label class="help">*站內信主旨</label>
-        <input id="composeSubject" placeholder="請輸入站內信主旨" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="composeSubject" maxlength="150" placeholder="請輸入站內信主旨" style="flex:1" />
+          <span id="composeSubjectCount" class="help" style="white-space:nowrap;">0/150</span>
+        </div>
 
         <label class="help" style="margin-top:8px;">*站內信內容</label>
         <div class="msg-editor-toolbar">B / I / U · 字體 · 對齊 · 連結 · 圖片（示意工具列）</div>
@@ -331,7 +334,7 @@
         msgSearch:$('msgSearch'), msgReset:$('msgReset'), msgCreate:$('msgCreate'), msgBatchDelete:$('msgBatchDelete'), msgCheckAll:$('msgCheckAll'), msgRows:$('msgRows'),
         msgSummary:$('msgSummary'), msgPageInfo:$('msgPageInfo'), msgPrev:$('msgPrev'), msgNext:$('msgNext'),
         msgComposeMask:$('msgComposeMask'), composeClose:$('composeClose'),
-        composeSubject:$('composeSubject'), composeBody:$('composeBody'), composeTarget:$('composeTarget'), composeSendMode:$('composeSendMode'),
+        composeSubject:$('composeSubject'), composeSubjectCount:$('composeSubjectCount'), composeBody:$('composeBody'), composeTarget:$('composeTarget'), composeSendMode:$('composeSendMode'),
         composeCreator:$('composeCreator'), composeModifier:$('composeModifier'), composeSentCount:$('composeSentCount'), composeSendAt:$('composeSendAt'),
         composeClear:$('composeClear'), composeSaveDraft:$('composeSaveDraft'), composeSend:$('composeSend')
       };
@@ -574,6 +577,7 @@
           el.composeModifier.value = 'lvd_rjin_w';
           el.composeSentCount.value = Number(m.sentCount || 0);
           el.composeSendAt.value = m.sentAt ? new Date(m.sentAt.getTime() - m.sentAt.getTimezoneOffset()*60000).toISOString().slice(0,16) : '';
+          updateSubjectCount();
           el.msgComposeMask.classList.add('show');
         }
         const msgDel = e.target.closest('.msg-del');
@@ -614,14 +618,22 @@
         state.editingMsgId = null;
         el.composeSubject.value=''; el.composeBody.value=''; el.composeSendMode.value='immediate'; el.composeTarget.value='all';
         el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+        updateSubjectCount();
         el.msgComposeMask.classList.add('show');
       });
 
       el.composeClear.addEventListener('click',()=>{
         state.editingMsgId = null;
+        el.composeSubject.value=''; el.composeBody.value='';
+        updateSubjectCount();
         el.msgComposeMask.classList.remove('show');
       });
       el.composeClose.addEventListener('click',()=> el.msgComposeMask.classList.remove('show'));
+
+      function updateSubjectCount(){
+        el.composeSubjectCount.textContent = `${el.composeSubject.value.length}/150`;
+      }
+      el.composeSubject.addEventListener('input', updateSubjectCount);
 
       function saveCompose(forceDraft=false){
         const subject = el.composeSubject.value.trim();
@@ -654,6 +666,7 @@
         }
         state.editingMsgId = null;
         el.composeSubject.value=''; el.composeBody.value='';
+        updateSubjectCount();
         el.msgComposeMask.classList.remove('show');
         renderMessages();
       }
