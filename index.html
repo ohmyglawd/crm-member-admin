@@ -3,343 +3,292 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CRM 後台 - 會員資料頁</title>
+    <title>CRM 後台 - 會員管理</title>
     <style>
       :root {
-        --bg: #f3f6fb;
-        --card: #ffffff;
-        --text: #0f172a;
-        --soft: #64748b;
-        --line: #dbe3ef;
-        --primary: #2563eb;
-        --good: #059669;
-        --warn: #d97706;
-        --bad: #dc2626;
+        --bg: #f3f6fb; --card: #fff; --text: #0f172a; --soft: #64748b; --line: #dbe3ef;
+        --primary: #2563eb; --good: #059669; --warn: #d97706; --bad: #dc2626;
       }
       * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: Inter, "Noto Sans TC", system-ui, -apple-system, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-      }
+      body { margin: 0; font-family: Inter, "Noto Sans TC", system-ui, sans-serif; background: var(--bg); color: var(--text); }
       .wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
-      .title { margin: 0 0 14px; font-size: 1.5rem; }
+      .top { display:flex; justify-content:space-between; align-items:end; gap:12px; }
+      h1 { margin: 0 0 8px; font-size: 1.5rem; }
+      .tabs { display:flex; gap:8px; margin: 8px 0 14px; }
+      .tab { border:1px solid var(--line); background:#fff; color:#0f172a; padding:8px 12px; border-radius:10px; cursor:pointer; }
+      .tab.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+      .view { display:none; }
+      .view.active { display:block; }
 
-      .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 14px; }
-      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-      .kpi .l { color: var(--soft); font-size: .85rem; }
-      .kpi .v { margin-top: 6px; font-size: 1.3rem; font-weight: 800; }
+      .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+      .kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+      .kpi .l { color:var(--soft); font-size:.85rem; }
+      .kpi .v { margin-top:6px; font-size:1.3rem; font-weight:800; }
 
-      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-      .filters {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
-        gap: 10px;
-        margin-bottom: 14px;
-      }
-      input, select, button {
-        height: 38px;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        padding: 0 10px;
-        font: inherit;
-      }
-      button { background: var(--primary); color: #fff; border: none; cursor: pointer; }
-      button.secondary { background: #475569; }
-      button.ghost { background: #fff; color: #0f172a; border: 1px solid var(--line); }
+      .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+      .filters { display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr auto auto; gap:10px; margin-bottom:14px; }
+      input, select, button { height:38px; border-radius:10px; border:1px solid var(--line); padding:0 10px; font:inherit; }
+      button { background:var(--primary); color:#fff; border:none; cursor:pointer; }
+      button.secondary { background:#475569; }
+      button.ghost { background:#fff; color:#0f172a; border:1px solid var(--line); }
 
-      table { width: 100%; border-collapse: collapse; }
-      th, td {
-        text-align: left;
-        padding: 10px 8px;
-        border-bottom: 1px solid var(--line);
-        font-size: .92rem;
-      }
-      th { color: var(--soft); font-weight: 700; }
-      tr.member-row { cursor: pointer; }
-      tr.member-row:hover { background: #f8fafc; }
-      .tag { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
-      .tier-gold { background: #fef3c7; color: #92400e; }
-      .tier-silver { background: #e2e8f0; color: #334155; }
-      .tier-bronze { background: #ffedd5; color: #9a3412; }
-      .status-active { color: var(--good); font-weight: 700; }
-      .status-inactive { color: var(--bad); font-weight: 700; }
-      .status-pending { color: var(--warn); font-weight: 700; }
+      table { width:100%; border-collapse:collapse; }
+      th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size:.92rem; }
+      th { color:var(--soft); font-weight:700; }
+      tr.member-row:hover { background:#f8fafc; }
+      .toolbar { display:flex; justify-content:space-between; align-items:center; margin-top:12px; color:var(--soft); }
+      .pager { display:flex; gap:8px; align-items:center; }
+      .pager button { width:34px; height:34px; padding:0; }
 
-      .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; color: var(--soft); }
-      .pager { display: flex; gap: 8px; align-items: center; }
-      .pager button { width: 34px; height: 34px; padding: 0; }
+      .tag { display:inline-block; padding:3px 8px; border-radius:999px; font-size:.78rem; font-weight:700; }
+      .status-active { color: var(--good); font-weight:700; }
+      .status-inactive { color: var(--bad); font-weight:700; }
+      .status-pending { color: var(--warn); font-weight:700; }
 
-      .drawer {
-        position: fixed;
-        top: 0;
-        right: -420px;
-        width: 400px;
-        height: 100vh;
-        background: #fff;
-        border-left: 1px solid var(--line);
-        box-shadow: -12px 0 30px rgba(2, 6, 23, .12);
-        transition: right .2s ease;
-        padding: 16px;
-        overflow: auto;
-        z-index: 20;
-      }
-      .drawer.open { right: 0; }
-      .drawer h3 { margin: 0 0 12px; }
-      .drawer .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      .field { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
-      .field .k { color: var(--soft); font-size: .8rem; }
-      .field .v { margin-top: 4px; font-weight: 700; }
+      .drawer { position:fixed; top:0; right:-420px; width:400px; height:100vh; background:#fff; border-left:1px solid var(--line); box-shadow:-12px 0 30px rgba(2,6,23,.12); transition:right .2s; padding:16px; overflow:auto; z-index:20; }
+      .drawer.open { right:0; }
+      .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .field { border:1px solid var(--line); border-radius:10px; padding:10px; }
+      .field .k { color:var(--soft); font-size:.8rem; }
+      .field .v { margin-top:4px; font-weight:700; }
 
-      .modal-mask {
-        position: fixed;
-        inset: 0;
-        background: rgba(2,6,23,.45);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 30;
-      }
-      .modal-mask.show { display: flex; }
-      .modal {
-        width: min(620px, 92vw);
-        background: #fff;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        padding: 16px;
-      }
-      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+      .modal-mask { position:fixed; inset:0; background:rgba(2,6,23,.45); display:none; align-items:center; justify-content:center; z-index:30; }
+      .modal-mask.show { display:flex; }
+      .modal { width:min(680px,92vw); background:#fff; border-radius:12px; border:1px solid var(--line); padding:16px; }
+      .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
-      @media (max-width: 1020px) {
-        .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
-        .filters { grid-template-columns: 1fr 1fr; }
-        .drawer { width: 92vw; }
+      .level-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto auto; gap:10px; }
+      .help { color:var(--soft); font-size:.88rem; }
+
+      @media (max-width:1020px) {
+        .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .filters { grid-template-columns:1fr 1fr; }
+        .level-grid { grid-template-columns:1fr 1fr; }
+        .drawer { width:92vw; }
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h1 class="title">CRM 後台 - 會員資料頁</h1>
-
-      <section class="kpis" id="kpis"></section>
-
-      <section class="panel">
-        <div class="filters">
-          <input id="q" placeholder="搜尋：姓名 / Email / 電話 / 會員編號" />
-          <select id="tier">
-            <option value="">會員等級（全部）</option>
-            <option value="Gold">Gold</option>
-            <option value="Silver">Silver</option>
-            <option value="Bronze">Bronze</option>
-          </select>
-          <select id="status">
-            <option value="">狀態（全部）</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Pending">Pending</option>
-          </select>
-          <select id="channel">
-            <option value="">來源渠道（全部）</option>
-            <option value="Ads">Ads</option>
-            <option value="Organic">Organic</option>
-            <option value="Referral">Referral</option>
-            <option value="Event">Event</option>
-          </select>
-          <select id="sort">
-            <option value="created_desc">註冊時間：新到舊</option>
-            <option value="created_asc">註冊時間：舊到新</option>
-            <option value="ltv_desc">LTV：高到低</option>
-            <option value="points_desc">點數：高到低</option>
-          </select>
-          <button id="exportCsv" class="ghost">匯出 CSV</button>
-          <button id="reset" class="secondary">重設</button>
+      <div class="top">
+        <div>
+          <h1>CRM 後台 - 會員管理</h1>
+          <div class="help">會員資料頁 + 會員等級設定頁（資料同步）</div>
         </div>
+      </div>
 
-        <div style="overflow:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>會員編號</th><th>姓名</th><th>Email / 電話</th><th>等級</th><th>狀態</th><th>來源</th><th>總消費(LTV)</th><th>點數</th><th>註冊日</th><th>最後登入</th><th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="members">會員資料</button>
+        <button class="tab" data-tab="levels">會員等級設定</button>
+      </div>
 
-        <div class="toolbar">
-          <div id="summary"></div>
-          <div class="pager">
-            <button id="prev">‹</button>
-            <span id="pageInfo"></span>
-            <button id="next">›</button>
+      <section id="view-members" class="view active">
+        <section class="kpis" id="kpis"></section>
+        <section class="panel">
+          <div class="filters">
+            <input id="q" placeholder="搜尋：姓名 / Email / 電話 / 會員編號" />
+            <select id="tier"><option value="">會員等級（全部）</option></select>
+            <select id="status"><option value="">狀態（全部）</option><option>Active</option><option>Inactive</option><option>Pending</option></select>
+            <select id="channel"><option value="">來源渠道（全部）</option><option>Ads</option><option>Organic</option><option>Referral</option><option>Event</option></select>
+            <select id="sort"><option value="created_desc">註冊時間：新到舊</option><option value="created_asc">註冊時間：舊到新</option><option value="ltv_desc">LTV：高到低</option><option value="points_desc">點數：高到低</option></select>
+            <button id="exportCsv" class="ghost">匯出 CSV</button>
+            <button id="reset" class="secondary">重設</button>
           </div>
-        </div>
+
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>會員編號</th><th>姓名</th><th>Email / 電話</th><th>等級</th><th>狀態</th><th>來源</th><th>總消費(LTV)</th><th>點數</th><th>註冊日</th><th>最後登入</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+
+          <div class="toolbar">
+            <div id="summary"></div>
+            <div class="pager"><button id="prev">‹</button><span id="pageInfo"></span><button id="next">›</button></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="view-levels" class="view">
+        <section class="panel" style="margin-bottom:12px;">
+          <h3 style="margin:0 0 10px;">新增 / 編輯會員等級</h3>
+          <div class="level-grid">
+            <input id="lv_name" placeholder="等級名稱（例：Platinum）" />
+            <input id="lv_min_ltv" type="number" placeholder="最低 LTV" />
+            <input id="lv_min_points" type="number" placeholder="最低點數" />
+            <input id="lv_color" placeholder="標籤色（例：#7c3aed）" value="#7c3aed" />
+            <button id="lv_save">儲存等級</button>
+            <button id="lv_reset" class="secondary">清空表單</button>
+          </div>
+          <div class="help" style="margin-top:8px;">判定規則：LTV 與點數同時達標才升級。系統會以門檻高到低自動套用。</div>
+        </section>
+
+        <section class="panel">
+          <h3 style="margin:0 0 10px;">會員等級清單</h3>
+          <table>
+            <thead><tr><th>等級</th><th>最低 LTV</th><th>最低點數</th><th>標籤色</th><th>符合會員數</th><th>操作</th></tr></thead>
+            <tbody id="levelRows"></tbody>
+          </table>
+        </section>
       </section>
     </div>
 
     <aside class="drawer" id="drawer">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>會員詳細資料</h3>
-        <button id="closeDrawer" class="ghost" style="height:30px;">關閉</button>
+        <h3>會員詳細資料</h3><button id="closeDrawer" class="ghost" style="height:30px;">關閉</button>
       </div>
-      <div id="drawerBody" class="grid"></div>
-      <div style="margin-top:12px;display:flex;gap:8px;">
-        <button id="drawerEdit">編輯資料</button>
-      </div>
+      <div id="drawerBody" class="grid2"></div>
+      <div style="margin-top:12px;"><button id="drawerEdit">編輯資料</button></div>
     </aside>
 
     <div class="modal-mask" id="editMask">
       <div class="modal">
         <h3 style="margin:0 0 12px;">編輯會員（假寫入）</h3>
         <div class="form-grid">
-          <input id="f_name" placeholder="姓名" />
-          <input id="f_email" placeholder="Email" />
-          <input id="f_phone" placeholder="電話" />
-          <select id="f_tier"><option>Gold</option><option>Silver</option><option>Bronze</option></select>
-          <select id="f_status"><option>Active</option><option>Inactive</option><option>Pending</option></select>
+          <input id="f_name" placeholder="姓名" /><input id="f_email" placeholder="Email" />
+          <input id="f_phone" placeholder="電話" /><select id="f_status"><option>Active</option><option>Inactive</option><option>Pending</option></select>
           <select id="f_channel"><option>Ads</option><option>Organic</option><option>Referral</option><option>Event</option></select>
-          <input id="f_ltv" type="number" placeholder="LTV" />
-          <input id="f_points" type="number" placeholder="點數" />
+          <input id="f_ltv" type="number" placeholder="LTV" /><input id="f_points" type="number" placeholder="點數" />
         </div>
-        <div class="actions">
-          <button id="cancelEdit" class="secondary">取消</button>
-          <button id="saveEdit">儲存</button>
-        </div>
+        <div class="actions"><button id="cancelEdit" class="secondary">取消</button><button id="saveEdit">儲存</button></div>
       </div>
     </div>
 
     <script>
       const members = Array.from({ length: 48 }).map((_, i) => {
-        const tiers = ["Gold", "Silver", "Bronze"];
         const statuses = ["Active", "Inactive", "Pending"];
         const channels = ["Ads", "Organic", "Referral", "Event"];
         const first = ["王", "李", "陳", "林", "張", "黃", "吳", "劉"][i % 8];
         const last = ["小安", "佳穎", "志明", "怡君", "柏翰", "雅婷", "家豪", "詩涵"][i % 8];
-        const created = new Date(2024, (i * 3) % 12, (i * 7) % 27 + 1);
-        const lastLogin = new Date(2025, (i * 5) % 12, (i * 11) % 27 + 1);
         return {
           id: `M${String(10001 + i)}`,
           name: first + last,
           email: `member${i + 1}@demo-crm.com`,
           phone: `09${String(10000000 + i * 97).slice(0, 8)}`,
-          tier: tiers[i % 3], status: statuses[i % 3], channel: channels[i % 4],
+          status: statuses[i % 3], channel: channels[i % 4],
           ltv: 800 + (i * 137) % 25000, points: (i * 83) % 9800,
-          createdAt: created, lastLoginAt: lastLogin,
+          createdAt: new Date(2024, (i * 3) % 12, (i * 7) % 27 + 1),
+          lastLoginAt: new Date(2025, (i * 5) % 12, (i * 11) % 27 + 1),
         };
       });
 
-      const state = { page: 1, pageSize: 10, selectedId: null };
+      let levels = [
+        { id: 'lv1', name: 'Gold', minLtv: 15000, minPoints: 5000, color: '#f59e0b' },
+        { id: 'lv2', name: 'Silver', minLtv: 8000, minPoints: 2500, color: '#64748b' },
+        { id: 'lv3', name: 'Bronze', minLtv: 0, minPoints: 0, color: '#b45309' },
+      ];
+
+      const state = { page: 1, pageSize: 10, selectedId: null, editingLevelId: null };
+      const $ = (id) => document.getElementById(id);
       const el = {
-        q: document.getElementById('q'),
-        tier: document.getElementById('tier'),
-        status: document.getElementById('status'),
-        channel: document.getElementById('channel'),
-        sort: document.getElementById('sort'),
-        rows: document.getElementById('rows'),
-        summary: document.getElementById('summary'),
-        pageInfo: document.getElementById('pageInfo'),
-        prev: document.getElementById('prev'),
-        next: document.getElementById('next'),
-        reset: document.getElementById('reset'),
-        kpis: document.getElementById('kpis'),
-        drawer: document.getElementById('drawer'),
-        closeDrawer: document.getElementById('closeDrawer'),
-        drawerBody: document.getElementById('drawerBody'),
-        editMask: document.getElementById('editMask'),
-        exportCsv: document.getElementById('exportCsv'),
-        drawerEdit: document.getElementById('drawerEdit'),
-        f_name: document.getElementById('f_name'),
-        f_email: document.getElementById('f_email'),
-        f_phone: document.getElementById('f_phone'),
-        f_tier: document.getElementById('f_tier'),
-        f_status: document.getElementById('f_status'),
-        f_channel: document.getElementById('f_channel'),
-        f_ltv: document.getElementById('f_ltv'),
-        f_points: document.getElementById('f_points'),
-        cancelEdit: document.getElementById('cancelEdit'),
-        saveEdit: document.getElementById('saveEdit'),
+        tabs: Array.from(document.querySelectorAll('.tab')),
+        viewMembers: $('view-members'), viewLevels: $('view-levels'),
+        q: $('q'), tier: $('tier'), status: $('status'), channel: $('channel'), sort: $('sort'),
+        rows: $('rows'), summary: $('summary'), pageInfo: $('pageInfo'), prev: $('prev'), next: $('next'),
+        reset: $('reset'), exportCsv: $('exportCsv'), kpis: $('kpis'),
+        drawer: $('drawer'), closeDrawer: $('closeDrawer'), drawerBody: $('drawerBody'), drawerEdit: $('drawerEdit'),
+        editMask: $('editMask'), f_name: $('f_name'), f_email: $('f_email'), f_phone: $('f_phone'), f_status: $('f_status'),
+        f_channel: $('f_channel'), f_ltv: $('f_ltv'), f_points: $('f_points'), cancelEdit: $('cancelEdit'), saveEdit: $('saveEdit'),
+        lv_name: $('lv_name'), lv_min_ltv: $('lv_min_ltv'), lv_min_points: $('lv_min_points'), lv_color: $('lv_color'),
+        lv_save: $('lv_save'), lv_reset: $('lv_reset'), levelRows: $('levelRows')
       };
 
       const fmtDate = d => d.toISOString().slice(0,10);
       const fmtMoney = n => `NT$ ${Number(n).toLocaleString()}`;
+      const orderedLevels = () => [...levels].sort((a,b) => (b.minLtv + b.minPoints) - (a.minLtv + a.minPoints));
 
-      function selectedMember() { return members.find(m => m.id === state.selectedId) || null; }
+      function evalTier(m) {
+        const hit = orderedLevels().find(l => m.ltv >= Number(l.minLtv) && m.points >= Number(l.minPoints));
+        return hit || levels[levels.length - 1];
+      }
+
+      function tierBadge(level) {
+        return `<span class="tag" style="background:${level.color}22;color:${level.color};border:1px solid ${level.color}55">${level.name}</span>`;
+      }
+
+      function refreshTierFilter() {
+        const current = el.tier.value;
+        const opts = ['<option value="">會員等級（全部）</option>'].concat(orderedLevels().map(l => `<option value="${l.name}">${l.name}</option>`));
+        el.tier.innerHTML = opts.join('');
+        el.tier.value = current;
+      }
 
       function kpiCards(list) {
         const active = list.filter(m => m.status === 'Active').length;
         const totalLtv = list.reduce((a,b)=>a+Number(b.ltv),0);
         const avgLtv = list.length ? Math.round(totalLtv/list.length) : 0;
-        const gold = list.filter(m => m.tier === 'Gold').length;
+        const top = orderedLevels()[0]?.name || '-';
+        const topCount = list.filter(m => evalTier(m).name === top).length;
         el.kpis.innerHTML = `
           <div class="kpi"><div class="l">會員總數</div><div class="v">${list.length}</div></div>
           <div class="kpi"><div class="l">活躍會員</div><div class="v">${active}</div></div>
           <div class="kpi"><div class="l">平均 LTV</div><div class="v">${fmtMoney(avgLtv)}</div></div>
-          <div class="kpi"><div class="l">Gold 會員</div><div class="v">${gold}</div></div>
+          <div class="kpi"><div class="l">${top} 會員</div><div class="v">${topCount}</div></div>
         `;
       }
 
-      function getFiltered() {
+      function getFilteredMembers() {
         const q = el.q.value.trim().toLowerCase();
         let list = members.filter(m => {
+          const tierName = evalTier(m).name;
           const matchQ = !q || `${m.id} ${m.name} ${m.email} ${m.phone}`.toLowerCase().includes(q);
           return matchQ
-            && (!el.tier.value || m.tier === el.tier.value)
+            && (!el.tier.value || tierName === el.tier.value)
             && (!el.status.value || m.status === el.status.value)
             && (!el.channel.value || m.channel === el.channel.value);
         });
-        const sortKey = el.sort.value;
-        list.sort((a,b) => sortKey === 'created_desc' ? b.createdAt-a.createdAt :
-          sortKey === 'created_asc' ? a.createdAt-b.createdAt :
-          sortKey === 'ltv_desc' ? b.ltv-a.ltv : b.points-a.points);
+        const sk = el.sort.value;
+        list.sort((a,b) => sk === 'created_desc' ? b.createdAt-a.createdAt : sk === 'created_asc' ? a.createdAt-b.createdAt : sk === 'ltv_desc' ? b.ltv-a.ltv : b.points-a.points);
         return list;
       }
+
+      function selectedMember() { return members.find(m => m.id === state.selectedId) || null; }
 
       function renderDrawer() {
         const m = selectedMember();
         if (!m) { el.drawer.classList.remove('open'); return; }
+        const lv = evalTier(m);
         el.drawer.classList.add('open');
         el.drawerBody.innerHTML = `
           <div class="field"><div class="k">會員編號</div><div class="v">${m.id}</div></div>
           <div class="field"><div class="k">姓名</div><div class="v">${m.name}</div></div>
           <div class="field"><div class="k">Email</div><div class="v">${m.email}</div></div>
           <div class="field"><div class="k">電話</div><div class="v">${m.phone}</div></div>
-          <div class="field"><div class="k">等級</div><div class="v">${m.tier}</div></div>
+          <div class="field"><div class="k">會員等級</div><div class="v">${tierBadge(lv)}</div></div>
           <div class="field"><div class="k">狀態</div><div class="v">${m.status}</div></div>
           <div class="field"><div class="k">來源</div><div class="v">${m.channel}</div></div>
           <div class="field"><div class="k">LTV</div><div class="v">${fmtMoney(m.ltv)}</div></div>
           <div class="field"><div class="k">點數</div><div class="v">${Number(m.points).toLocaleString()}</div></div>
           <div class="field"><div class="k">註冊</div><div class="v">${fmtDate(m.createdAt)}</div></div>
-          <div class="field"><div class="k">最後登入</div><div class="v">${fmtDate(m.lastLoginAt)}</div></div>
-        `;
+          <div class="field"><div class="k">最後登入</div><div class="v">${fmtDate(m.lastLoginAt)}</div></div>`;
       }
 
-      function render() {
-        const list = getFiltered();
+      function renderMembers() {
+        refreshTierFilter();
+        const list = getFilteredMembers();
         const total = list.length;
         const pages = Math.max(1, Math.ceil(total / state.pageSize));
         if (state.page > pages) state.page = pages;
         const start = (state.page - 1) * state.pageSize;
         const pageItems = list.slice(start, start + state.pageSize);
-
         kpiCards(list);
 
-        el.rows.innerHTML = pageItems.map(m => `
-          <tr class="member-row" data-id="${m.id}">
-            <td>${m.id}</td>
-            <td>${m.name}</td>
+        el.rows.innerHTML = pageItems.map(m => {
+          const lv = evalTier(m);
+          return `<tr class="member-row" data-id="${m.id}">
+            <td>${m.id}</td><td>${m.name}</td>
             <td>${m.email}<br/><span style="color:var(--soft)">${m.phone}</span></td>
-            <td><span class="tag tier-${m.tier.toLowerCase()}">${m.tier}</span></td>
+            <td>${tierBadge(lv)}</td>
             <td><span class="status-${m.status.toLowerCase()}">${m.status}</span></td>
-            <td>${m.channel}</td>
-            <td>${fmtMoney(m.ltv)}</td>
-            <td>${Number(m.points).toLocaleString()}</td>
-            <td>${fmtDate(m.createdAt)}</td>
-            <td>${fmtDate(m.lastLoginAt)}</td>
-            <td><button class="ghost edit-btn" data-id="${m.id}" style="height:30px;">編輯</button></td>
-          </tr>
-        `).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
+            <td>${m.channel}</td><td>${fmtMoney(m.ltv)}</td><td>${Number(m.points).toLocaleString()}</td>
+            <td>${fmtDate(m.createdAt)}</td><td>${fmtDate(m.lastLoginAt)}</td>
+            <td><button class="ghost edit-btn" data-id="${m.id}" style="height:30px;">編輯</button></td></tr>`;
+        }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
 
         el.summary.textContent = `共 ${total} 筆，顯示 ${total ? start + 1 : 0}-${Math.min(start + state.pageSize, total)} 筆`;
         el.pageInfo.textContent = `${state.page} / ${pages}`;
@@ -348,73 +297,113 @@
         renderDrawer();
       }
 
-      function openEdit(id) {
+      function renderLevels() {
+        const sorted = orderedLevels();
+        el.levelRows.innerHTML = sorted.map(l => {
+          const count = members.filter(m => evalTier(m).name === l.name).length;
+          return `<tr>
+            <td>${tierBadge(l)}</td>
+            <td>${fmtMoney(l.minLtv)}</td>
+            <td>${Number(l.minPoints).toLocaleString()}</td>
+            <td><span class="tag" style="background:${l.color};color:#fff">${l.color}</span></td>
+            <td>${count}</td>
+            <td>
+              <button class="ghost lv-edit" data-id="${l.id}" style="height:30px;">編輯</button>
+              <button class="secondary lv-del" data-id="${l.id}" style="height:30px;">刪除</button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+
+      function openEditMember(id) {
         state.selectedId = id;
-        const m = selectedMember();
-        if (!m) return;
-        el.f_name.value = m.name;
-        el.f_email.value = m.email;
-        el.f_phone.value = m.phone;
-        el.f_tier.value = m.tier;
-        el.f_status.value = m.status;
-        el.f_channel.value = m.channel;
-        el.f_ltv.value = m.ltv;
-        el.f_points.value = m.points;
+        const m = selectedMember(); if (!m) return;
+        el.f_name.value = m.name; el.f_email.value = m.email; el.f_phone.value = m.phone;
+        el.f_status.value = m.status; el.f_channel.value = m.channel;
+        el.f_ltv.value = m.ltv; el.f_points.value = m.points;
         el.editMask.classList.add('show');
       }
 
-      function closeEdit() { el.editMask.classList.remove('show'); }
-
-      function exportCurrentCsv() {
-        const list = getFiltered();
+      function exportCsv() {
+        const list = getFilteredMembers();
         const headers = ['id','name','email','phone','tier','status','channel','ltv','points','createdAt','lastLoginAt'];
-        const lines = [headers.join(',')].concat(list.map(m => [
-          m.id,m.name,m.email,m.phone,m.tier,m.status,m.channel,m.ltv,m.points,fmtDate(m.createdAt),fmtDate(m.lastLoginAt)
-        ].map(v => `"${String(v).replaceAll('"','""')}"`).join(',')));
-        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const lines = [headers.join(',')].concat(list.map(m => {
+          const lv = evalTier(m).name;
+          return [m.id,m.name,m.email,m.phone,lv,m.status,m.channel,m.ltv,m.points,fmtDate(m.createdAt),fmtDate(m.lastLoginAt)]
+            .map(v => `"${String(v).replaceAll('"','""')}"`).join(',');
+        }));
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `crm-members-${Date.now()}.csv`;
-        a.click();
-        URL.revokeObjectURL(a.href);
+        a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' }));
+        a.download = `crm-members-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(a.href);
       }
 
-      [el.q, el.tier, el.status, el.channel, el.sort].forEach(x =>
-        x.addEventListener('input', () => { state.page = 1; render(); })
-      );
-      el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; render(); } });
-      el.next.addEventListener('click', () => { state.page++; render(); });
-      el.reset.addEventListener('click', () => {
-        el.q.value = ''; el.tier.value = ''; el.status.value = ''; el.channel.value = '';
-        el.sort.value = 'created_desc'; state.page = 1; render();
-      });
-      el.exportCsv.addEventListener('click', exportCurrentCsv);
+      function switchTab(name) {
+        el.tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+        el.viewMembers.classList.toggle('active', name === 'members');
+        el.viewLevels.classList.toggle('active', name === 'levels');
+      }
+
+      // bindings
+      el.tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+      [el.q, el.tier, el.status, el.channel, el.sort].forEach(x => x.addEventListener('input', () => { state.page = 1; renderMembers(); }));
+      el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; renderMembers(); } });
+      el.next.addEventListener('click', () => { state.page++; renderMembers(); });
+      el.reset.addEventListener('click', () => { el.q.value=''; el.tier.value=''; el.status.value=''; el.channel.value=''; el.sort.value='created_desc'; state.page=1; renderMembers(); });
+      el.exportCsv.addEventListener('click', exportCsv);
       el.closeDrawer.addEventListener('click', () => { state.selectedId = null; renderDrawer(); });
-      el.drawerEdit.addEventListener('click', () => { if (state.selectedId) openEdit(state.selectedId); });
-      el.cancelEdit.addEventListener('click', closeEdit);
+      el.drawerEdit.addEventListener('click', () => { if (state.selectedId) openEditMember(state.selectedId); });
+
+      el.cancelEdit.addEventListener('click', () => el.editMask.classList.remove('show'));
       el.saveEdit.addEventListener('click', () => {
-        const m = selectedMember();
-        if (!m) return;
+        const m = selectedMember(); if (!m) return;
         m.name = el.f_name.value.trim() || m.name;
         m.email = el.f_email.value.trim() || m.email;
         m.phone = el.f_phone.value.trim() || m.phone;
-        m.tier = el.f_tier.value;
-        m.status = el.f_status.value;
-        m.channel = el.f_channel.value;
-        m.ltv = Number(el.f_ltv.value || m.ltv);
-        m.points = Number(el.f_points.value || m.points);
-        closeEdit();
-        render();
+        m.status = el.f_status.value; m.channel = el.f_channel.value;
+        m.ltv = Number(el.f_ltv.value || m.ltv); m.points = Number(el.f_points.value || m.points);
+        el.editMask.classList.remove('show'); renderMembers(); renderLevels();
       });
 
       document.addEventListener('click', (e) => {
-        const edit = e.target.closest('.edit-btn');
-        if (edit) { e.stopPropagation(); openEdit(edit.dataset.id); return; }
         const tr = e.target.closest('tr.member-row');
+        const eb = e.target.closest('.edit-btn');
+        if (eb) { e.stopPropagation(); openEditMember(eb.dataset.id); return; }
         if (tr) { state.selectedId = tr.dataset.id; renderDrawer(); }
+
+        const le = e.target.closest('.lv-edit');
+        if (le) {
+          const lv = levels.find(x => x.id === le.dataset.id); if (!lv) return;
+          state.editingLevelId = lv.id;
+          el.lv_name.value = lv.name; el.lv_min_ltv.value = lv.minLtv; el.lv_min_points.value = lv.minPoints; el.lv_color.value = lv.color;
+        }
+
+        const ld = e.target.closest('.lv-del');
+        if (ld) {
+          if (levels.length <= 1) return alert('至少要保留一個會員等級');
+          levels = levels.filter(x => x.id !== ld.dataset.id);
+          renderLevels(); renderMembers();
+        }
       });
 
-      render();
+      el.lv_save.addEventListener('click', () => {
+        const payload = {
+          id: state.editingLevelId || `lv-${Date.now()}`,
+          name: el.lv_name.value.trim(),
+          minLtv: Number(el.lv_min_ltv.value || 0),
+          minPoints: Number(el.lv_min_points.value || 0),
+          color: el.lv_color.value.trim() || '#7c3aed'
+        };
+        if (!payload.name) return alert('請填寫等級名稱');
+        const idx = levels.findIndex(x => x.id === payload.id);
+        if (idx >= 0) levels[idx] = payload; else levels.push(payload);
+        state.editingLevelId = null;
+        el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed';
+        renderLevels(); renderMembers();
+      });
+      el.lv_reset.addEventListener('click', () => { state.editingLevelId = null; el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed'; });
+
+      renderLevels();
+      renderMembers();
     </script>
   </body>
 </html>
