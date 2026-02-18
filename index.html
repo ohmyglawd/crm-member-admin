@@ -23,24 +23,18 @@
         background: var(--bg);
         color: var(--text);
       }
-      .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
       .title { margin: 0 0 14px; font-size: 1.5rem; }
+
       .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 14px; }
-      .kpi {
-        background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
-      }
+      .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
       .kpi .l { color: var(--soft); font-size: .85rem; }
       .kpi .v { margin-top: 6px; font-size: 1.3rem; font-weight: 800; }
 
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 14px;
-      }
+      .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
       .filters {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
         gap: 10px;
         margin-bottom: 14px;
       }
@@ -53,6 +47,7 @@
       }
       button { background: var(--primary); color: #fff; border: none; cursor: pointer; }
       button.secondary { background: #475569; }
+      button.ghost { background: #fff; color: #0f172a; border: 1px solid var(--line); }
 
       table { width: 100%; border-collapse: collapse; }
       th, td {
@@ -62,17 +57,12 @@
         font-size: .92rem;
       }
       th { color: var(--soft); font-weight: 700; }
-      .tag {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 999px;
-        font-size: .78rem;
-        font-weight: 700;
-      }
+      tr.member-row { cursor: pointer; }
+      tr.member-row:hover { background: #f8fafc; }
+      .tag { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
       .tier-gold { background: #fef3c7; color: #92400e; }
       .tier-silver { background: #e2e8f0; color: #334155; }
       .tier-bronze { background: #ffedd5; color: #9a3412; }
-
       .status-active { color: var(--good); font-weight: 700; }
       .status-inactive { color: var(--bad); font-weight: 700; }
       .status-pending { color: var(--warn); font-weight: 700; }
@@ -81,9 +71,51 @@
       .pager { display: flex; gap: 8px; align-items: center; }
       .pager button { width: 34px; height: 34px; padding: 0; }
 
-      @media (max-width: 960px) {
+      .drawer {
+        position: fixed;
+        top: 0;
+        right: -420px;
+        width: 400px;
+        height: 100vh;
+        background: #fff;
+        border-left: 1px solid var(--line);
+        box-shadow: -12px 0 30px rgba(2, 6, 23, .12);
+        transition: right .2s ease;
+        padding: 16px;
+        overflow: auto;
+        z-index: 20;
+      }
+      .drawer.open { right: 0; }
+      .drawer h3 { margin: 0 0 12px; }
+      .drawer .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .field { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+      .field .k { color: var(--soft); font-size: .8rem; }
+      .field .v { margin-top: 4px; font-weight: 700; }
+
+      .modal-mask {
+        position: fixed;
+        inset: 0;
+        background: rgba(2,6,23,.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+      }
+      .modal-mask.show { display: flex; }
+      .modal {
+        width: min(620px, 92vw);
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 16px;
+      }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+      @media (max-width: 1020px) {
         .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
         .filters { grid-template-columns: 1fr 1fr; }
+        .drawer { width: 92vw; }
       }
     </style>
   </head>
@@ -121,6 +153,7 @@
             <option value="ltv_desc">LTV：高到低</option>
             <option value="points_desc">點數：高到低</option>
           </select>
+          <button id="exportCsv" class="ghost">匯出 CSV</button>
           <button id="reset" class="secondary">重設</button>
         </div>
 
@@ -128,16 +161,7 @@
           <table>
             <thead>
               <tr>
-                <th>會員編號</th>
-                <th>姓名</th>
-                <th>Email / 電話</th>
-                <th>等級</th>
-                <th>狀態</th>
-                <th>來源</th>
-                <th>總消費(LTV)</th>
-                <th>點數</th>
-                <th>註冊日</th>
-                <th>最後登入</th>
+                <th>會員編號</th><th>姓名</th><th>Email / 電話</th><th>等級</th><th>狀態</th><th>來源</th><th>總消費(LTV)</th><th>點數</th><th>註冊日</th><th>最後登入</th><th>操作</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -155,54 +179,75 @@
       </section>
     </div>
 
-    <script>
-      const members = [
-        ...Array.from({ length: 48 }).map((_, i) => {
-          const tiers = ["Gold", "Silver", "Bronze"];
-          const statuses = ["Active", "Inactive", "Pending"];
-          const channels = ["Ads", "Organic", "Referral", "Event"];
-          const first = ["王", "李", "陳", "林", "張", "黃", "吳", "劉"][i % 8];
-          const last = ["小安", "佳穎", "志明", "怡君", "柏翰", "雅婷", "家豪", "詩涵"][i % 8];
-          const created = new Date(2024, (i * 3) % 12, (i * 7) % 27 + 1);
-          const lastLogin = new Date(2025, (i * 5) % 12, (i * 11) % 27 + 1);
-          return {
-            id: `M${String(10001 + i)}`,
-            name: first + last,
-            email: `member${i + 1}@demo-crm.com`,
-            phone: `09${String(10000000 + i * 97).slice(0, 8)}`,
-            tier: tiers[i % 3],
-            status: statuses[i % 3],
-            channel: channels[i % 4],
-            ltv: 800 + (i * 137) % 25000,
-            points: (i * 83) % 9800,
-            createdAt: created,
-            lastLoginAt: lastLogin,
-          };
-        })
-      ];
+    <aside class="drawer" id="drawer">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>會員詳細資料</h3>
+        <button id="closeDrawer" class="ghost" style="height:30px;">關閉</button>
+      </div>
+      <div id="drawerBody" class="grid"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button id="drawerEdit">編輯資料</button>
+      </div>
+    </aside>
 
-      const state = { page: 1, pageSize: 10 };
+    <div class="modal-mask" id="editMask">
+      <div class="modal">
+        <h3 style="margin:0 0 12px;">編輯會員（假寫入）</h3>
+        <div class="form-grid">
+          <input id="f_name" placeholder="姓名" />
+          <input id="f_email" placeholder="Email" />
+          <input id="f_phone" placeholder="電話" />
+          <select id="f_tier"><option>Gold</option><option>Silver</option><option>Bronze</option></select>
+          <select id="f_status"><option>Active</option><option>Inactive</option><option>Pending</option></select>
+          <select id="f_channel"><option>Ads</option><option>Organic</option><option>Referral</option><option>Event</option></select>
+          <input id="f_ltv" type="number" placeholder="LTV" />
+          <input id="f_points" type="number" placeholder="點數" />
+        </div>
+        <div class="actions">
+          <button id="cancelEdit" class="secondary">取消</button>
+          <button id="saveEdit">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const members = Array.from({ length: 48 }).map((_, i) => {
+        const tiers = ["Gold", "Silver", "Bronze"];
+        const statuses = ["Active", "Inactive", "Pending"];
+        const channels = ["Ads", "Organic", "Referral", "Event"];
+        const first = ["王", "李", "陳", "林", "張", "黃", "吳", "劉"][i % 8];
+        const last = ["小安", "佳穎", "志明", "怡君", "柏翰", "雅婷", "家豪", "詩涵"][i % 8];
+        const created = new Date(2024, (i * 3) % 12, (i * 7) % 27 + 1);
+        const lastLogin = new Date(2025, (i * 5) % 12, (i * 11) % 27 + 1);
+        return {
+          id: `M${String(10001 + i)}`,
+          name: first + last,
+          email: `member${i + 1}@demo-crm.com`,
+          phone: `09${String(10000000 + i * 97).slice(0, 8)}`,
+          tier: tiers[i % 3], status: statuses[i % 3], channel: channels[i % 4],
+          ltv: 800 + (i * 137) % 25000, points: (i * 83) % 9800,
+          createdAt: created, lastLoginAt: lastLogin,
+        };
+      });
+
+      const state = { page: 1, pageSize: 10, selectedId: null };
       const el = {
-        q: document.getElementById('q'),
-        tier: document.getElementById('tier'),
-        status: document.getElementById('status'),
-        channel: document.getElementById('channel'),
-        sort: document.getElementById('sort'),
-        rows: document.getElementById('rows'),
-        summary: document.getElementById('summary'),
-        pageInfo: document.getElementById('pageInfo'),
-        prev: document.getElementById('prev'),
-        next: document.getElementById('next'),
-        reset: document.getElementById('reset'),
-        kpis: document.getElementById('kpis'),
+        q: q, tier: tier, status: status, channel: channel, sort: sort, rows: rows,
+        summary: summary, pageInfo: pageInfo, prev: prev, next: next, reset: reset,
+        kpis: kpis, drawer: drawer, closeDrawer: closeDrawer, drawerBody: drawerBody,
+        editMask: editMask, exportCsv: exportCsv, drawerEdit: drawerEdit,
+        f_name, f_email, f_phone, f_tier, f_status, f_channel, f_ltv, f_points,
+        cancelEdit, saveEdit,
       };
 
       const fmtDate = d => d.toISOString().slice(0,10);
-      const fmtMoney = n => `NT$ ${n.toLocaleString()}`;
+      const fmtMoney = n => `NT$ ${Number(n).toLocaleString()}`;
+
+      function selectedMember() { return members.find(m => m.id === state.selectedId) || null; }
 
       function kpiCards(list) {
         const active = list.filter(m => m.status === 'Active').length;
-        const totalLtv = list.reduce((a,b)=>a+b.ltv,0);
+        const totalLtv = list.reduce((a,b)=>a+Number(b.ltv),0);
         const avgLtv = list.length ? Math.round(totalLtv/list.length) : 0;
         const gold = list.filter(m => m.tier === 'Gold').length;
         el.kpis.innerHTML = `
@@ -217,21 +262,35 @@
         const q = el.q.value.trim().toLowerCase();
         let list = members.filter(m => {
           const matchQ = !q || `${m.id} ${m.name} ${m.email} ${m.phone}`.toLowerCase().includes(q);
-          const matchTier = !el.tier.value || m.tier === el.tier.value;
-          const matchStatus = !el.status.value || m.status === el.status.value;
-          const matchChannel = !el.channel.value || m.channel === el.channel.value;
-          return matchQ && matchTier && matchStatus && matchChannel;
+          return matchQ
+            && (!el.tier.value || m.tier === el.tier.value)
+            && (!el.status.value || m.status === el.status.value)
+            && (!el.channel.value || m.channel === el.channel.value);
         });
-
-        const sort = el.sort.value;
-        list.sort((a,b) => {
-          if (sort === 'created_desc') return b.createdAt - a.createdAt;
-          if (sort === 'created_asc') return a.createdAt - b.createdAt;
-          if (sort === 'ltv_desc') return b.ltv - a.ltv;
-          if (sort === 'points_desc') return b.points - a.points;
-          return 0;
-        });
+        const sortKey = el.sort.value;
+        list.sort((a,b) => sortKey === 'created_desc' ? b.createdAt-a.createdAt :
+          sortKey === 'created_asc' ? a.createdAt-b.createdAt :
+          sortKey === 'ltv_desc' ? b.ltv-a.ltv : b.points-a.points);
         return list;
+      }
+
+      function renderDrawer() {
+        const m = selectedMember();
+        if (!m) { el.drawer.classList.remove('open'); return; }
+        el.drawer.classList.add('open');
+        el.drawerBody.innerHTML = `
+          <div class="field"><div class="k">會員編號</div><div class="v">${m.id}</div></div>
+          <div class="field"><div class="k">姓名</div><div class="v">${m.name}</div></div>
+          <div class="field"><div class="k">Email</div><div class="v">${m.email}</div></div>
+          <div class="field"><div class="k">電話</div><div class="v">${m.phone}</div></div>
+          <div class="field"><div class="k">等級</div><div class="v">${m.tier}</div></div>
+          <div class="field"><div class="k">狀態</div><div class="v">${m.status}</div></div>
+          <div class="field"><div class="k">來源</div><div class="v">${m.channel}</div></div>
+          <div class="field"><div class="k">LTV</div><div class="v">${fmtMoney(m.ltv)}</div></div>
+          <div class="field"><div class="k">點數</div><div class="v">${Number(m.points).toLocaleString()}</div></div>
+          <div class="field"><div class="k">註冊</div><div class="v">${fmtDate(m.createdAt)}</div></div>
+          <div class="field"><div class="k">最後登入</div><div class="v">${fmtDate(m.lastLoginAt)}</div></div>
+        `;
       }
 
       function render() {
@@ -239,14 +298,13 @@
         const total = list.length;
         const pages = Math.max(1, Math.ceil(total / state.pageSize));
         if (state.page > pages) state.page = pages;
-
         const start = (state.page - 1) * state.pageSize;
         const pageItems = list.slice(start, start + state.pageSize);
 
         kpiCards(list);
 
         el.rows.innerHTML = pageItems.map(m => `
-          <tr>
+          <tr class="member-row" data-id="${m.id}">
             <td>${m.id}</td>
             <td>${m.name}</td>
             <td>${m.email}<br/><span style="color:var(--soft)">${m.phone}</span></td>
@@ -254,16 +312,49 @@
             <td><span class="status-${m.status.toLowerCase()}">${m.status}</span></td>
             <td>${m.channel}</td>
             <td>${fmtMoney(m.ltv)}</td>
-            <td>${m.points.toLocaleString()}</td>
+            <td>${Number(m.points).toLocaleString()}</td>
             <td>${fmtDate(m.createdAt)}</td>
             <td>${fmtDate(m.lastLoginAt)}</td>
+            <td><button class="ghost edit-btn" data-id="${m.id}" style="height:30px;">編輯</button></td>
           </tr>
-        `).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
+        `).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
 
         el.summary.textContent = `共 ${total} 筆，顯示 ${total ? start + 1 : 0}-${Math.min(start + state.pageSize, total)} 筆`;
         el.pageInfo.textContent = `${state.page} / ${pages}`;
         el.prev.disabled = state.page <= 1;
         el.next.disabled = state.page >= pages;
+        renderDrawer();
+      }
+
+      function openEdit(id) {
+        state.selectedId = id;
+        const m = selectedMember();
+        if (!m) return;
+        el.f_name.value = m.name;
+        el.f_email.value = m.email;
+        el.f_phone.value = m.phone;
+        el.f_tier.value = m.tier;
+        el.f_status.value = m.status;
+        el.f_channel.value = m.channel;
+        el.f_ltv.value = m.ltv;
+        el.f_points.value = m.points;
+        el.editMask.classList.add('show');
+      }
+
+      function closeEdit() { el.editMask.classList.remove('show'); }
+
+      function exportCurrentCsv() {
+        const list = getFiltered();
+        const headers = ['id','name','email','phone','tier','status','channel','ltv','points','createdAt','lastLoginAt'];
+        const lines = [headers.join(',')].concat(list.map(m => [
+          m.id,m.name,m.email,m.phone,m.tier,m.status,m.channel,m.ltv,m.points,fmtDate(m.createdAt),fmtDate(m.lastLoginAt)
+        ].map(v => `"${String(v).replaceAll('"','""')}"`).join(',')));
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `crm-members-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
       }
 
       [el.q, el.tier, el.status, el.channel, el.sort].forEach(x =>
@@ -272,13 +363,33 @@
       el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; render(); } });
       el.next.addEventListener('click', () => { state.page++; render(); });
       el.reset.addEventListener('click', () => {
-        el.q.value = '';
-        el.tier.value = '';
-        el.status.value = '';
-        el.channel.value = '';
-        el.sort.value = 'created_desc';
-        state.page = 1;
+        el.q.value = ''; el.tier.value = ''; el.status.value = ''; el.channel.value = '';
+        el.sort.value = 'created_desc'; state.page = 1; render();
+      });
+      el.exportCsv.addEventListener('click', exportCurrentCsv);
+      el.closeDrawer.addEventListener('click', () => { state.selectedId = null; renderDrawer(); });
+      el.drawerEdit.addEventListener('click', () => { if (state.selectedId) openEdit(state.selectedId); });
+      el.cancelEdit.addEventListener('click', closeEdit);
+      el.saveEdit.addEventListener('click', () => {
+        const m = selectedMember();
+        if (!m) return;
+        m.name = el.f_name.value.trim() || m.name;
+        m.email = el.f_email.value.trim() || m.email;
+        m.phone = el.f_phone.value.trim() || m.phone;
+        m.tier = el.f_tier.value;
+        m.status = el.f_status.value;
+        m.channel = el.f_channel.value;
+        m.ltv = Number(el.f_ltv.value || m.ltv);
+        m.points = Number(el.f_points.value || m.points);
+        closeEdit();
         render();
+      });
+
+      document.addEventListener('click', (e) => {
+        const edit = e.target.closest('.edit-btn');
+        if (edit) { e.stopPropagation(); openEdit(edit.dataset.id); return; }
+        const tr = e.target.closest('tr.member-row');
+        if (tr) { state.selectedId = tr.dataset.id; renderDrawer(); }
       });
 
       render();
