@@ -6,81 +6,89 @@
     <title>CRM 後台 - 會員管理</title>
     <style>
       :root {
-        --bg: #f3f6fb; --card: #fff; --text: #0f172a; --soft: #64748b; --line: #dbe3ef;
-        --primary: #2563eb; --good: #059669; --warn: #d97706; --bad: #dc2626;
+        --bg:#f3f6fb;--card:#fff;--text:#0f172a;--soft:#64748b;--line:#dbe3ef;
+        --primary:#2563eb;--good:#059669;--warn:#d97706;--bad:#dc2626;
       }
-      * { box-sizing: border-box; }
-      body { margin: 0; font-family: Inter, "Noto Sans TC", system-ui, sans-serif; background: var(--bg); color: var(--text); }
-      .wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
-      .top { display:flex; justify-content:space-between; align-items:end; gap:12px; }
-      h1 { margin: 0 0 8px; font-size: 1.5rem; }
-      .tabs { display:flex; gap:8px; margin: 8px 0 14px; }
-      .tab { border:1px solid var(--line); background:#fff; color:#0f172a; padding:8px 12px; border-radius:10px; cursor:pointer; }
-      .tab.active { background:#2563eb; color:#fff; border-color:#2563eb; }
-      .view { display:none; }
-      .view.active { display:block; }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,"Noto Sans TC",system-ui,sans-serif;background:var(--bg);color:var(--text)}
+      .wrap{max-width:1280px;margin:0 auto;padding:20px}
+      h1{margin:0 0 8px;font-size:1.5rem}
+      .help{color:var(--soft);font-size:.9rem}
+      .tabs{display:flex;gap:8px;margin:10px 0 14px}
+      .tab{border:1px solid var(--line);background:#fff;color:#0f172a;padding:8px 12px;border-radius:10px;cursor:pointer}
+      .tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+      .view{display:none}.view.active{display:block}
 
-      .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
-      .kpi { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
-      .kpi .l { color:var(--soft); font-size:.85rem; }
-      .kpi .v { margin-top:6px; font-size:1.3rem; font-weight:800; }
+      .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+      .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+      .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+      .kpi .l{color:var(--soft);font-size:.85rem}.kpi .v{margin-top:6px;font-size:1.3rem;font-weight:800}
 
-      .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
-      .filters { display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr auto auto; gap:10px; margin-bottom:14px; }
-      input, select, button { height:38px; border-radius:10px; border:1px solid var(--line); padding:0 10px; font:inherit; }
-      button { background:var(--primary); color:#fff; border:none; cursor:pointer; }
-      button.secondary { background:#475569; }
-      button.ghost { background:#fff; color:#0f172a; border:1px solid var(--line); }
+      input,select,button,textarea{font:inherit}
+      input,select,button{height:38px;border-radius:10px;border:1px solid var(--line);padding:0 10px}
+      textarea{border-radius:10px;border:1px solid var(--line);padding:10px;resize:vertical}
+      button{background:var(--primary);color:#fff;border:none;cursor:pointer}
+      button.secondary{background:#475569}
+      button.ghost{background:#fff;color:#0f172a;border:1px solid var(--line)}
 
-      table { width:100%; border-collapse:collapse; }
-      th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); font-size:.92rem; }
-      th { color:var(--soft); font-weight:700; }
-      tr.member-row:hover { background:#f8fafc; }
-      .toolbar { display:flex; justify-content:space-between; align-items:center; margin-top:12px; color:var(--soft); }
-      .pager { display:flex; gap:8px; align-items:center; }
-      .pager button { width:34px; height:34px; padding:0; }
+      .filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto auto;gap:10px;margin-bottom:14px}
+      table{width:100%;border-collapse:collapse}
+      th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);font-size:.92rem}
+      th{color:var(--soft);font-weight:700}
+      tr.member-row:hover{background:#f8fafc}
+      .toolbar{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--soft)}
+      .pager{display:flex;gap:8px;align-items:center}.pager button{width:34px;height:34px;padding:0}
+      .tag{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.78rem;font-weight:700}
+      .status-active{color:var(--good);font-weight:700}.status-inactive{color:var(--bad);font-weight:700}.status-pending{color:var(--warn);font-weight:700}
 
-      .tag { display:inline-block; padding:3px 8px; border-radius:999px; font-size:.78rem; font-weight:700; }
-      .status-active { color: var(--good); font-weight:700; }
-      .status-inactive { color: var(--bad); font-weight:700; }
-      .status-pending { color: var(--warn); font-weight:700; }
+      .drawer{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(2,6,23,.12);transition:right .2s;padding:16px;overflow:auto;z-index:20}
+      .drawer.open{right:0}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .field{border:1px solid var(--line);border-radius:10px;padding:10px}.field .k{color:var(--soft);font-size:.8rem}.field .v{margin-top:4px;font-weight:700}
 
-      .drawer { position:fixed; top:0; right:-420px; width:400px; height:100vh; background:#fff; border-left:1px solid var(--line); box-shadow:-12px 0 30px rgba(2,6,23,.12); transition:right .2s; padding:16px; overflow:auto; z-index:20; }
-      .drawer.open { right:0; }
-      .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-      .field { border:1px solid var(--line); border-radius:10px; padding:10px; }
-      .field .k { color:var(--soft); font-size:.8rem; }
-      .field .v { margin-top:4px; font-weight:700; }
+      .modal-mask{position:fixed;inset:0;background:rgba(2,6,23,.45);display:none;align-items:center;justify-content:center;z-index:30}
+      .modal-mask.show{display:flex}
+      .modal{width:min(760px,92vw);background:#fff;border-radius:12px;border:1px solid var(--line);padding:16px}
+      .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 
-      .modal-mask { position:fixed; inset:0; background:rgba(2,6,23,.45); display:none; align-items:center; justify-content:center; z-index:30; }
-      .modal-mask.show { display:flex; }
-      .modal { width:min(680px,92vw); background:#fff; border-radius:12px; border:1px solid var(--line); padding:16px; }
-      .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-      .actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+      .level-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:10px}
 
-      .level-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr auto auto; gap:10px; }
-      .help { color:var(--soft); font-size:.88rem; }
+      /* 站內信 */
+      .msg-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+      .msg-layout{display:grid;grid-template-columns:340px 1fr;gap:12px}
+      .msg-list{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+      .msg-item{padding:10px;border-bottom:1px solid var(--line);cursor:pointer}
+      .msg-item:hover{background:#f8fafc}
+      .msg-item.active{background:#eff6ff}
+      .msg-item.unread .subject{font-weight:800}
+      .msg-meta{color:var(--soft);font-size:.82rem;display:flex;justify-content:space-between;gap:8px}
+      .subject{margin:6px 0 4px}
+      .preview{color:var(--soft);font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .msg-detail{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px;min-height:560px;display:flex;flex-direction:column}
+      .msg-body{margin-top:8px;line-height:1.7;white-space:pre-wrap}
+      .msg-actions{display:flex;gap:8px;margin-top:auto;padding-top:12px}
+      .badge-unread{background:#fee2e2;color:#b91c1c;border-radius:999px;padding:2px 8px;font-size:.76rem;font-weight:700}
+      .compose{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
+      .compose textarea{min-height:110px}
 
-      @media (max-width:1020px) {
-        .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
-        .filters { grid-template-columns:1fr 1fr; }
-        .level-grid { grid-template-columns:1fr 1fr; }
-        .drawer { width:92vw; }
+      @media (max-width:1040px){
+        .kpis,.msg-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .filters{grid-template-columns:1fr 1fr}
+        .level-grid{grid-template-columns:1fr 1fr}
+        .msg-layout{grid-template-columns:1fr}
+        .drawer{width:92vw}
       }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="top">
-        <div>
-          <h1>CRM 後台 - 會員管理</h1>
-          <div class="help">會員資料頁 + 會員等級設定頁（資料同步）</div>
-        </div>
-      </div>
+      <h1>CRM 後台 - 會員管理</h1>
+      <div class="help">會員資料頁 + 會員等級設定頁 + 代理站內信（假資料）</div>
 
       <div class="tabs">
         <button class="tab active" data-tab="members">會員資料</button>
         <button class="tab" data-tab="levels">會員等級設定</button>
+        <button class="tab" data-tab="messages">代理站內信</button>
       </div>
 
       <section id="view-members" class="view active">
@@ -95,22 +103,13 @@
             <button id="exportCsv" class="ghost">匯出 CSV</button>
             <button id="reset" class="secondary">重設</button>
           </div>
-
           <div style="overflow:auto;">
             <table>
-              <thead>
-                <tr>
-                  <th>會員編號</th><th>姓名</th><th>Email / 電話</th><th>等級</th><th>狀態</th><th>來源</th><th>總消費(LTV)</th><th>點數</th><th>註冊日</th><th>最後登入</th><th>操作</th>
-                </tr>
-              </thead>
+              <thead><tr><th>會員編號</th><th>姓名</th><th>Email / 電話</th><th>等級</th><th>狀態</th><th>來源</th><th>總消費(LTV)</th><th>點數</th><th>註冊日</th><th>最後登入</th><th>操作</th></tr></thead>
               <tbody id="rows"></tbody>
             </table>
           </div>
-
-          <div class="toolbar">
-            <div id="summary"></div>
-            <div class="pager"><button id="prev">‹</button><span id="pageInfo"></span><button id="next">›</button></div>
-          </div>
+          <div class="toolbar"><div id="summary"></div><div class="pager"><button id="prev">‹</button><span id="pageInfo"></span><button id="next">›</button></div></div>
         </section>
       </section>
 
@@ -125,9 +124,8 @@
             <button id="lv_save">儲存等級</button>
             <button id="lv_reset" class="secondary">清空表單</button>
           </div>
-          <div class="help" style="margin-top:8px;">判定規則：LTV 與點數同時達標才升級。系統會以門檻高到低自動套用。</div>
+          <div class="help" style="margin-top:8px;">規則：LTV + 點數同時達標，系統依門檻高到低自動判定等級。</div>
         </section>
-
         <section class="panel">
           <h3 style="margin:0 0 10px;">會員等級清單</h3>
           <table>
@@ -136,12 +134,42 @@
           </table>
         </section>
       </section>
+
+      <section id="view-messages" class="view">
+        <section class="msg-kpis" id="msgKpis"></section>
+        <section class="panel">
+          <div class="filters" style="grid-template-columns:2fr 1fr 1fr auto auto auto;">
+            <input id="msgQ" placeholder="搜尋訊息：主旨 / 收件人 / 內容" />
+            <select id="msgStatus"><option value="">狀態（全部）</option><option value="unread">未讀</option><option value="read">已讀</option></select>
+            <select id="msgType"><option value="">類型（全部）</option><option value="system">系統通知</option><option value="campaign">活動訊息</option><option value="service">客服回覆</option></select>
+            <button id="msgReset" class="secondary">重設</button>
+            <button id="msgMarkRead" class="ghost">標記已讀</button>
+            <button id="msgDelete" class="ghost">刪除</button>
+          </div>
+
+          <div class="msg-layout">
+            <div>
+              <div class="msg-list" id="msgList"></div>
+              <div class="compose">
+                <h4 style="margin:0">發送新站內信（假資料）</h4>
+                <select id="composeTo"></select>
+                <input id="composeSubject" placeholder="主旨" />
+                <select id="composeType"><option value="system">系統通知</option><option value="campaign">活動訊息</option><option value="service">客服回覆</option></select>
+                <textarea id="composeBody" placeholder="請輸入訊息內容"></textarea>
+                <div style="display:flex;justify-content:flex-end;"><button id="composeSend">送出站內信</button></div>
+              </div>
+            </div>
+
+            <div class="msg-detail" id="msgDetail">
+              <div class="help">請先從左側選一封站內信。</div>
+            </div>
+          </div>
+        </section>
+      </section>
     </div>
 
     <aside class="drawer" id="drawer">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3>會員詳細資料</h3><button id="closeDrawer" class="ghost" style="height:30px;">關閉</button>
-      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;"><h3>會員詳細資料</h3><button id="closeDrawer" class="ghost" style="height:30px;">關閉</button></div>
       <div id="drawerBody" class="grid2"></div>
       <div style="margin-top:12px;"><button id="drawerEdit">編輯資料</button></div>
     </aside>
@@ -178,80 +206,90 @@
       });
 
       let levels = [
-        { id: 'lv1', name: 'Gold', minLtv: 15000, minPoints: 5000, color: '#f59e0b' },
-        { id: 'lv2', name: 'Silver', minLtv: 8000, minPoints: 2500, color: '#64748b' },
-        { id: 'lv3', name: 'Bronze', minLtv: 0, minPoints: 0, color: '#b45309' },
+        { id:'lv1', name:'Gold', minLtv:15000, minPoints:5000, color:'#f59e0b' },
+        { id:'lv2', name:'Silver', minLtv:8000, minPoints:2500, color:'#64748b' },
+        { id:'lv3', name:'Bronze', minLtv:0, minPoints:0, color:'#b45309' },
       ];
 
-      const state = { page: 1, pageSize: 10, selectedId: null, editingLevelId: null };
-      const $ = (id) => document.getElementById(id);
+      let messages = Array.from({ length: 36 }).map((_, i) => {
+        const to = members[i % members.length];
+        const types = ['system','campaign','service'];
+        const t = types[i % 3];
+        const subjects = {
+          system: '帳號安全提醒與異常登入通知',
+          campaign: '本月會員專屬優惠活動通知',
+          service: '客服回覆：您反映的問題已處理'
+        };
+        return {
+          id:`MSG${1000+i}`,
+          toId: to.id,
+          toName: to.name,
+          type: t,
+          subject: subjects[t],
+          body: `Hi ${to.name}，\n這是一則${t === 'system' ? '系統通知' : t === 'campaign' ? '活動訊息' : '客服訊息'}。\n\n此內容為假資料，用於站內信後台操作測試。`,
+          createdAt: new Date(2025, (i*2)%12, (i*5)%27 + 1, (i*3)%24, (i*7)%60),
+          read: i % 4 !== 0,
+          deleted: false,
+          sender: 'CRM Admin'
+        };
+      });
+
+      const state = { page:1, pageSize:10, selectedId:null, editingLevelId:null, activeMsgId:null };
+      const $ = id => document.getElementById(id);
       const el = {
-        tabs: Array.from(document.querySelectorAll('.tab')),
-        viewMembers: $('view-members'), viewLevels: $('view-levels'),
-        q: $('q'), tier: $('tier'), status: $('status'), channel: $('channel'), sort: $('sort'),
-        rows: $('rows'), summary: $('summary'), pageInfo: $('pageInfo'), prev: $('prev'), next: $('next'),
-        reset: $('reset'), exportCsv: $('exportCsv'), kpis: $('kpis'),
-        drawer: $('drawer'), closeDrawer: $('closeDrawer'), drawerBody: $('drawerBody'), drawerEdit: $('drawerEdit'),
-        editMask: $('editMask'), f_name: $('f_name'), f_email: $('f_email'), f_phone: $('f_phone'), f_status: $('f_status'),
-        f_channel: $('f_channel'), f_ltv: $('f_ltv'), f_points: $('f_points'), cancelEdit: $('cancelEdit'), saveEdit: $('saveEdit'),
-        lv_name: $('lv_name'), lv_min_ltv: $('lv_min_ltv'), lv_min_points: $('lv_min_points'), lv_color: $('lv_color'),
-        lv_save: $('lv_save'), lv_reset: $('lv_reset'), levelRows: $('levelRows')
+        tabs:[...document.querySelectorAll('.tab')],
+        viewMembers:$('view-members'), viewLevels:$('view-levels'), viewMessages:$('view-messages'),
+        q:$('q'), tier:$('tier'), status:$('status'), channel:$('channel'), sort:$('sort'), rows:$('rows'), summary:$('summary'), pageInfo:$('pageInfo'), prev:$('prev'), next:$('next'), reset:$('reset'), exportCsv:$('exportCsv'), kpis:$('kpis'),
+        drawer:$('drawer'), closeDrawer:$('closeDrawer'), drawerBody:$('drawerBody'), drawerEdit:$('drawerEdit'),
+        editMask:$('editMask'), f_name:$('f_name'), f_email:$('f_email'), f_phone:$('f_phone'), f_status:$('f_status'), f_channel:$('f_channel'), f_ltv:$('f_ltv'), f_points:$('f_points'), cancelEdit:$('cancelEdit'), saveEdit:$('saveEdit'),
+        lv_name:$('lv_name'), lv_min_ltv:$('lv_min_ltv'), lv_min_points:$('lv_min_points'), lv_color:$('lv_color'), lv_save:$('lv_save'), lv_reset:$('lv_reset'), levelRows:$('levelRows'),
+        msgKpis:$('msgKpis'), msgQ:$('msgQ'), msgStatus:$('msgStatus'), msgType:$('msgType'), msgReset:$('msgReset'), msgMarkRead:$('msgMarkRead'), msgDelete:$('msgDelete'), msgList:$('msgList'), msgDetail:$('msgDetail'),
+        composeTo:$('composeTo'), composeSubject:$('composeSubject'), composeType:$('composeType'), composeBody:$('composeBody'), composeSend:$('composeSend')
       };
 
       const fmtDate = d => d.toISOString().slice(0,10);
+      const fmtDateTime = d => `${d.toISOString().slice(0,10)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       const fmtMoney = n => `NT$ ${Number(n).toLocaleString()}`;
-      const orderedLevels = () => [...levels].sort((a,b) => (b.minLtv + b.minPoints) - (a.minLtv + a.minPoints));
+      const orderedLevels = () => [...levels].sort((a,b) => (b.minLtv+b.minPoints) - (a.minLtv+a.minPoints));
+      const selectedMember = () => members.find(m => m.id === state.selectedId) || null;
+      const selectedMessage = () => messages.find(m => m.id === state.activeMsgId) || null;
 
-      function evalTier(m) {
-        const hit = orderedLevels().find(l => m.ltv >= Number(l.minLtv) && m.points >= Number(l.minPoints));
-        return hit || levels[levels.length - 1];
+      function evalTier(m){ return orderedLevels().find(l => m.ltv >= +l.minLtv && m.points >= +l.minPoints) || orderedLevels().at(-1); }
+      function tierBadge(l){ return `<span class="tag" style="background:${l.color}22;color:${l.color};border:1px solid ${l.color}55">${l.name}</span>`; }
+
+      function refreshTierFilter(){
+        const curr = el.tier.value;
+        el.tier.innerHTML = '<option value="">會員等級（全部）</option>' + orderedLevels().map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+        el.tier.value = curr;
       }
 
-      function tierBadge(level) {
-        return `<span class="tag" style="background:${level.color}22;color:${level.color};border:1px solid ${level.color}55">${level.name}</span>`;
-      }
-
-      function refreshTierFilter() {
-        const current = el.tier.value;
-        const opts = ['<option value="">會員等級（全部）</option>'].concat(orderedLevels().map(l => `<option value="${l.name}">${l.name}</option>`));
-        el.tier.innerHTML = opts.join('');
-        el.tier.value = current;
-      }
-
-      function kpiCards(list) {
-        const active = list.filter(m => m.status === 'Active').length;
-        const totalLtv = list.reduce((a,b)=>a+Number(b.ltv),0);
-        const avgLtv = list.length ? Math.round(totalLtv/list.length) : 0;
+      function kpiCards(list){
+        const active = list.filter(m => m.status==='Active').length;
+        const avg = list.length ? Math.round(list.reduce((a,b)=>a+b.ltv,0)/list.length) : 0;
         const top = orderedLevels()[0]?.name || '-';
         const topCount = list.filter(m => evalTier(m).name === top).length;
         el.kpis.innerHTML = `
           <div class="kpi"><div class="l">會員總數</div><div class="v">${list.length}</div></div>
           <div class="kpi"><div class="l">活躍會員</div><div class="v">${active}</div></div>
-          <div class="kpi"><div class="l">平均 LTV</div><div class="v">${fmtMoney(avgLtv)}</div></div>
-          <div class="kpi"><div class="l">${top} 會員</div><div class="v">${topCount}</div></div>
-        `;
+          <div class="kpi"><div class="l">平均 LTV</div><div class="v">${fmtMoney(avg)}</div></div>
+          <div class="kpi"><div class="l">${top} 會員</div><div class="v">${topCount}</div></div>`;
       }
 
-      function getFilteredMembers() {
+      function getFilteredMembers(){
         const q = el.q.value.trim().toLowerCase();
         let list = members.filter(m => {
-          const tierName = evalTier(m).name;
-          const matchQ = !q || `${m.id} ${m.name} ${m.email} ${m.phone}`.toLowerCase().includes(q);
-          return matchQ
-            && (!el.tier.value || tierName === el.tier.value)
-            && (!el.status.value || m.status === el.status.value)
-            && (!el.channel.value || m.channel === el.channel.value);
+          const tier = evalTier(m).name;
+          const hitQ = !q || `${m.id} ${m.name} ${m.email} ${m.phone}`.toLowerCase().includes(q);
+          return hitQ && (!el.tier.value || tier===el.tier.value) && (!el.status.value || m.status===el.status.value) && (!el.channel.value || m.channel===el.channel.value);
         });
         const sk = el.sort.value;
-        list.sort((a,b) => sk === 'created_desc' ? b.createdAt-a.createdAt : sk === 'created_asc' ? a.createdAt-b.createdAt : sk === 'ltv_desc' ? b.ltv-a.ltv : b.points-a.points);
+        list.sort((a,b)=> sk==='created_desc'?b.createdAt-a.createdAt : sk==='created_asc'?a.createdAt-b.createdAt : sk==='ltv_desc'?b.ltv-a.ltv : b.points-a.points);
         return list;
       }
 
-      function selectedMember() { return members.find(m => m.id === state.selectedId) || null; }
-
-      function renderDrawer() {
+      function renderDrawer(){
         const m = selectedMember();
-        if (!m) { el.drawer.classList.remove('open'); return; }
+        if(!m){ el.drawer.classList.remove('open'); return; }
         const lv = evalTier(m);
         el.drawer.classList.add('open');
         el.drawerBody.innerHTML = `
@@ -263,147 +301,202 @@
           <div class="field"><div class="k">狀態</div><div class="v">${m.status}</div></div>
           <div class="field"><div class="k">來源</div><div class="v">${m.channel}</div></div>
           <div class="field"><div class="k">LTV</div><div class="v">${fmtMoney(m.ltv)}</div></div>
-          <div class="field"><div class="k">點數</div><div class="v">${Number(m.points).toLocaleString()}</div></div>
+          <div class="field"><div class="k">點數</div><div class="v">${m.points.toLocaleString()}</div></div>
           <div class="field"><div class="k">註冊</div><div class="v">${fmtDate(m.createdAt)}</div></div>
           <div class="field"><div class="k">最後登入</div><div class="v">${fmtDate(m.lastLoginAt)}</div></div>`;
       }
 
-      function renderMembers() {
+      function renderMembers(){
         refreshTierFilter();
         const list = getFilteredMembers();
-        const total = list.length;
-        const pages = Math.max(1, Math.ceil(total / state.pageSize));
-        if (state.page > pages) state.page = pages;
-        const start = (state.page - 1) * state.pageSize;
+        const total = list.length, pages = Math.max(1, Math.ceil(total/state.pageSize));
+        if(state.page>pages) state.page = pages;
+        const start = (state.page-1)*state.pageSize;
         const pageItems = list.slice(start, start + state.pageSize);
         kpiCards(list);
 
         el.rows.innerHTML = pageItems.map(m => {
           const lv = evalTier(m);
           return `<tr class="member-row" data-id="${m.id}">
-            <td>${m.id}</td><td>${m.name}</td>
-            <td>${m.email}<br/><span style="color:var(--soft)">${m.phone}</span></td>
-            <td>${tierBadge(lv)}</td>
-            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span></td>
-            <td>${m.channel}</td><td>${fmtMoney(m.ltv)}</td><td>${Number(m.points).toLocaleString()}</td>
-            <td>${fmtDate(m.createdAt)}</td><td>${fmtDate(m.lastLoginAt)}</td>
+            <td>${m.id}</td><td>${m.name}</td><td>${m.email}<br><span style="color:var(--soft)">${m.phone}</span></td>
+            <td>${tierBadge(lv)}</td><td><span class="status-${m.status.toLowerCase()}">${m.status}</span></td><td>${m.channel}</td>
+            <td>${fmtMoney(m.ltv)}</td><td>${m.points.toLocaleString()}</td><td>${fmtDate(m.createdAt)}</td><td>${fmtDate(m.lastLoginAt)}</td>
             <td><button class="ghost edit-btn" data-id="${m.id}" style="height:30px;">編輯</button></td></tr>`;
         }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
 
-        el.summary.textContent = `共 ${total} 筆，顯示 ${total ? start + 1 : 0}-${Math.min(start + state.pageSize, total)} 筆`;
+        el.summary.textContent = `共 ${total} 筆，顯示 ${total?start+1:0}-${Math.min(start+state.pageSize,total)} 筆`;
         el.pageInfo.textContent = `${state.page} / ${pages}`;
-        el.prev.disabled = state.page <= 1;
-        el.next.disabled = state.page >= pages;
+        el.prev.disabled = state.page<=1; el.next.disabled = state.page>=pages;
         renderDrawer();
       }
 
-      function renderLevels() {
+      function renderLevels(){
         const sorted = orderedLevels();
         el.levelRows.innerHTML = sorted.map(l => {
-          const count = members.filter(m => evalTier(m).name === l.name).length;
-          return `<tr>
-            <td>${tierBadge(l)}</td>
-            <td>${fmtMoney(l.minLtv)}</td>
-            <td>${Number(l.minPoints).toLocaleString()}</td>
-            <td><span class="tag" style="background:${l.color};color:#fff">${l.color}</span></td>
-            <td>${count}</td>
-            <td>
-              <button class="ghost lv-edit" data-id="${l.id}" style="height:30px;">編輯</button>
-              <button class="secondary lv-del" data-id="${l.id}" style="height:30px;">刪除</button>
-            </td>
-          </tr>`;
+          const count = members.filter(m => evalTier(m).name===l.name).length;
+          return `<tr><td>${tierBadge(l)}</td><td>${fmtMoney(l.minLtv)}</td><td>${(+l.minPoints).toLocaleString()}</td><td><span class="tag" style="background:${l.color};color:#fff">${l.color}</span></td><td>${count}</td>
+          <td><button class="ghost lv-edit" data-id="${l.id}" style="height:30px;">編輯</button> <button class="secondary lv-del" data-id="${l.id}" style="height:30px;">刪除</button></td></tr>`;
         }).join('');
       }
 
-      function openEditMember(id) {
-        state.selectedId = id;
-        const m = selectedMember(); if (!m) return;
-        el.f_name.value = m.name; el.f_email.value = m.email; el.f_phone.value = m.phone;
-        el.f_status.value = m.status; el.f_channel.value = m.channel;
-        el.f_ltv.value = m.ltv; el.f_points.value = m.points;
+      function getFilteredMessages(){
+        const q = el.msgQ.value.trim().toLowerCase();
+        return messages.filter(m => !m.deleted)
+          .filter(m => !el.msgStatus.value || (el.msgStatus.value==='unread' ? !m.read : m.read))
+          .filter(m => !el.msgType.value || m.type===el.msgType.value)
+          .filter(m => !q || `${m.subject} ${m.toName} ${m.body}`.toLowerCase().includes(q))
+          .sort((a,b)=> b.createdAt - a.createdAt);
+      }
+
+      function renderMsgKpis(){
+        const list = messages.filter(m => !m.deleted);
+        const unread = list.filter(m => !m.read).length;
+        const system = list.filter(m => m.type==='system').length;
+        const campaign = list.filter(m => m.type==='campaign').length;
+        const service = list.filter(m => m.type==='service').length;
+        el.msgKpis.innerHTML = `
+          <div class="kpi"><div class="l">站內信總數</div><div class="v">${list.length}</div></div>
+          <div class="kpi"><div class="l">未讀訊息</div><div class="v">${unread}</div></div>
+          <div class="kpi"><div class="l">系統通知</div><div class="v">${system}</div></div>
+          <div class="kpi"><div class="l">活動/客服</div><div class="v">${campaign + service}</div></div>`;
+      }
+
+      function renderMessages(){
+        renderMsgKpis();
+        const list = getFilteredMessages();
+        if(state.activeMsgId && !list.some(x=>x.id===state.activeMsgId)) state.activeMsgId = null;
+
+        el.msgList.innerHTML = list.map(m => `
+          <div class="msg-item ${!m.read?'unread':''} ${state.activeMsgId===m.id?'active':''}" data-id="${m.id}">
+            <div class="msg-meta"><span>${m.toName} (${m.toId})</span><span>${fmtDateTime(m.createdAt)}</span></div>
+            <div class="subject">${m.subject}</div>
+            <div class="preview">${m.body.replace(/\n/g,' ')}</div>
+            <div class="msg-meta" style="margin-top:6px;">
+              <span>${m.type}</span>
+              ${!m.read ? '<span class="badge-unread">未讀</span>' : '<span>已讀</span>'}
+            </div>
+          </div>`
+        ).join('') || `<div class="msg-item"><div class="help">沒有符合條件的訊息</div></div>`;
+
+        const m = selectedMessage();
+        el.msgDetail.innerHTML = m ? `
+          <div class="msg-meta"><span>收件人：${m.toName} (${m.toId})</span><span>${fmtDateTime(m.createdAt)}</span></div>
+          <h3 style="margin:8px 0 4px;">${m.subject}</h3>
+          <div class="msg-meta"><span>類型：${m.type}</span><span>發送者：${m.sender}</span></div>
+          <div class="msg-body">${m.body}</div>
+          <div class="msg-actions">
+            <button id="detailToggleRead" class="ghost">${m.read ? '標為未讀' : '標為已讀'}</button>
+            <button id="detailDelete" class="secondary">刪除訊息</button>
+          </div>`
+          : `<div class="help">請先從左側選一封站內信。</div>`;
+
+        // 同步收件人下拉（和會員資料同步）
+        el.composeTo.innerHTML = members.map(m=>`<option value="${m.id}">${m.name} (${m.id})</option>`).join('');
+      }
+
+      function openEditMember(id){
+        state.selectedId=id; const m=selectedMember(); if(!m) return;
+        el.f_name.value=m.name; el.f_email.value=m.email; el.f_phone.value=m.phone;
+        el.f_status.value=m.status; el.f_channel.value=m.channel; el.f_ltv.value=m.ltv; el.f_points.value=m.points;
         el.editMask.classList.add('show');
       }
 
-      function exportCsv() {
+      function exportCsv(){
         const list = getFilteredMembers();
-        const headers = ['id','name','email','phone','tier','status','channel','ltv','points','createdAt','lastLoginAt'];
-        const lines = [headers.join(',')].concat(list.map(m => {
-          const lv = evalTier(m).name;
+        const headers=['id','name','email','phone','tier','status','channel','ltv','points','createdAt','lastLoginAt'];
+        const lines=[headers.join(',')].concat(list.map(m=>{
+          const lv=evalTier(m).name;
           return [m.id,m.name,m.email,m.phone,lv,m.status,m.channel,m.ltv,m.points,fmtDate(m.createdAt),fmtDate(m.lastLoginAt)]
-            .map(v => `"${String(v).replaceAll('"','""')}"`).join(',');
+            .map(v=>`"${String(v).replaceAll('"','""')}"`).join(',');
         }));
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' }));
-        a.download = `crm-members-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(a.href);
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}));
+        a.download=`crm-members-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(a.href);
       }
 
-      function switchTab(name) {
-        el.tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-        el.viewMembers.classList.toggle('active', name === 'members');
-        el.viewLevels.classList.toggle('active', name === 'levels');
+      function switchTab(name){
+        el.tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+        el.viewMembers.classList.toggle('active',name==='members');
+        el.viewLevels.classList.toggle('active',name==='levels');
+        el.viewMessages.classList.toggle('active',name==='messages');
       }
 
-      // bindings
-      el.tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
-      [el.q, el.tier, el.status, el.channel, el.sort].forEach(x => x.addEventListener('input', () => { state.page = 1; renderMembers(); }));
-      el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; renderMembers(); } });
-      el.next.addEventListener('click', () => { state.page++; renderMembers(); });
-      el.reset.addEventListener('click', () => { el.q.value=''; el.tier.value=''; el.status.value=''; el.channel.value=''; el.sort.value='created_desc'; state.page=1; renderMembers(); });
-      el.exportCsv.addEventListener('click', exportCsv);
-      el.closeDrawer.addEventListener('click', () => { state.selectedId = null; renderDrawer(); });
-      el.drawerEdit.addEventListener('click', () => { if (state.selectedId) openEditMember(state.selectedId); });
+      // events
+      el.tabs.forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+      [el.q,el.tier,el.status,el.channel,el.sort].forEach(x=>x.addEventListener('input',()=>{state.page=1;renderMembers()}));
+      el.prev.addEventListener('click',()=>{if(state.page>1){state.page--;renderMembers()}});
+      el.next.addEventListener('click',()=>{state.page++;renderMembers()});
+      el.reset.addEventListener('click',()=>{el.q.value='';el.tier.value='';el.status.value='';el.channel.value='';el.sort.value='created_desc';state.page=1;renderMembers()});
+      el.exportCsv.addEventListener('click',exportCsv);
 
-      el.cancelEdit.addEventListener('click', () => el.editMask.classList.remove('show'));
-      el.saveEdit.addEventListener('click', () => {
-        const m = selectedMember(); if (!m) return;
-        m.name = el.f_name.value.trim() || m.name;
-        m.email = el.f_email.value.trim() || m.email;
-        m.phone = el.f_phone.value.trim() || m.phone;
-        m.status = el.f_status.value; m.channel = el.f_channel.value;
-        m.ltv = Number(el.f_ltv.value || m.ltv); m.points = Number(el.f_points.value || m.points);
-        el.editMask.classList.remove('show'); renderMembers(); renderLevels();
+      el.closeDrawer.addEventListener('click',()=>{state.selectedId=null;renderDrawer()});
+      el.drawerEdit.addEventListener('click',()=>{if(state.selectedId) openEditMember(state.selectedId)});
+      el.cancelEdit.addEventListener('click',()=>el.editMask.classList.remove('show'));
+      el.saveEdit.addEventListener('click',()=>{
+        const m=selectedMember(); if(!m) return;
+        m.name=el.f_name.value.trim()||m.name; m.email=el.f_email.value.trim()||m.email; m.phone=el.f_phone.value.trim()||m.phone;
+        m.status=el.f_status.value; m.channel=el.f_channel.value; m.ltv=Number(el.f_ltv.value||m.ltv); m.points=Number(el.f_points.value||m.points);
+        el.editMask.classList.remove('show'); renderMembers(); renderLevels(); renderMessages();
       });
 
-      document.addEventListener('click', (e) => {
-        const tr = e.target.closest('tr.member-row');
-        const eb = e.target.closest('.edit-btn');
-        if (eb) { e.stopPropagation(); openEditMember(eb.dataset.id); return; }
-        if (tr) { state.selectedId = tr.dataset.id; renderDrawer(); }
+      document.addEventListener('click',(e)=>{
+        const tr=e.target.closest('tr.member-row'); const eb=e.target.closest('.edit-btn');
+        if(eb){e.stopPropagation();openEditMember(eb.dataset.id);return}
+        if(tr){state.selectedId=tr.dataset.id;renderDrawer()}
 
-        const le = e.target.closest('.lv-edit');
-        if (le) {
-          const lv = levels.find(x => x.id === le.dataset.id); if (!lv) return;
-          state.editingLevelId = lv.id;
-          el.lv_name.value = lv.name; el.lv_min_ltv.value = lv.minLtv; el.lv_min_points.value = lv.minPoints; el.lv_color.value = lv.color;
+        const le=e.target.closest('.lv-edit');
+        if(le){const lv=levels.find(x=>x.id===le.dataset.id); if(!lv)return; state.editingLevelId=lv.id; el.lv_name.value=lv.name; el.lv_min_ltv.value=lv.minLtv; el.lv_min_points.value=lv.minPoints; el.lv_color.value=lv.color;}
+        const ld=e.target.closest('.lv-del');
+        if(ld){if(levels.length<=1) return alert('至少要保留一個會員等級'); levels=levels.filter(x=>x.id!==ld.dataset.id); renderLevels(); renderMembers();}
+
+        const mi=e.target.closest('.msg-item');
+        if(mi){state.activeMsgId=mi.dataset.id; const m=selectedMessage(); if(m) m.read=true; renderMessages();}
+
+        if(e.target.id==='detailToggleRead'){
+          const m=selectedMessage(); if(!m)return; m.read=!m.read; renderMessages();
         }
-
-        const ld = e.target.closest('.lv-del');
-        if (ld) {
-          if (levels.length <= 1) return alert('至少要保留一個會員等級');
-          levels = levels.filter(x => x.id !== ld.dataset.id);
-          renderLevels(); renderMembers();
+        if(e.target.id==='detailDelete'){
+          const m=selectedMessage(); if(!m)return; m.deleted=true; state.activeMsgId=null; renderMessages();
         }
       });
 
-      el.lv_save.addEventListener('click', () => {
-        const payload = {
-          id: state.editingLevelId || `lv-${Date.now()}`,
-          name: el.lv_name.value.trim(),
-          minLtv: Number(el.lv_min_ltv.value || 0),
-          minPoints: Number(el.lv_min_points.value || 0),
-          color: el.lv_color.value.trim() || '#7c3aed'
-        };
-        if (!payload.name) return alert('請填寫等級名稱');
-        const idx = levels.findIndex(x => x.id === payload.id);
-        if (idx >= 0) levels[idx] = payload; else levels.push(payload);
-        state.editingLevelId = null;
-        el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed';
+      el.lv_save.addEventListener('click',()=>{
+        const payload={id:state.editingLevelId||`lv-${Date.now()}`,name:el.lv_name.value.trim(),minLtv:Number(el.lv_min_ltv.value||0),minPoints:Number(el.lv_min_points.value||0),color:el.lv_color.value.trim()||'#7c3aed'};
+        if(!payload.name) return alert('請填寫等級名稱');
+        const idx=levels.findIndex(x=>x.id===payload.id); if(idx>=0) levels[idx]=payload; else levels.push(payload);
+        state.editingLevelId=null; el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed';
         renderLevels(); renderMembers();
       });
-      el.lv_reset.addEventListener('click', () => { state.editingLevelId = null; el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed'; });
+      el.lv_reset.addEventListener('click',()=>{state.editingLevelId=null; el.lv_name.value=''; el.lv_min_ltv.value=''; el.lv_min_points.value=''; el.lv_color.value='#7c3aed';});
 
-      renderLevels();
-      renderMembers();
+      [el.msgQ, el.msgStatus, el.msgType].forEach(x=>x.addEventListener('input',renderMessages));
+      el.msgReset.addEventListener('click',()=>{el.msgQ.value='';el.msgStatus.value='';el.msgType.value='';renderMessages()});
+      el.msgMarkRead.addEventListener('click',()=>{const m=selectedMessage(); if(m){m.read=true; renderMessages();}});
+      el.msgDelete.addEventListener('click',()=>{const m=selectedMessage(); if(m){m.deleted=true; state.activeMsgId=null; renderMessages();}});
+
+      el.composeSend.addEventListener('click',()=>{
+        const toId = el.composeTo.value;
+        const to = members.find(m=>m.id===toId);
+        const subject = el.composeSubject.value.trim();
+        const body = el.composeBody.value.trim();
+        if(!to || !subject || !body) return alert('請填寫收件人、主旨與內容');
+        messages.unshift({
+          id:`MSG${10000 + Math.floor(Math.random()*90000)}`,
+          toId: to.id,
+          toName: to.name,
+          type: el.composeType.value,
+          subject,
+          body,
+          createdAt: new Date(),
+          read: false,
+          deleted: false,
+          sender: 'CRM Admin'
+        });
+        el.composeSubject.value=''; el.composeBody.value='';
+        renderMessages();
+      });
+
+      renderLevels(); renderMembers(); renderMessages();
     </script>
   </body>
 </html>
