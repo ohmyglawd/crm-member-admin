@@ -69,6 +69,11 @@
       .compose{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
       .compose textarea{min-height:100px}
 
+      .msg-compose-modal{width:min(860px,94vw)}
+      .msg-editor-toolbar{display:flex;gap:8px;flex-wrap:wrap;color:var(--soft);font-size:.82rem;border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;padding:8px 10px;background:#fafcff}
+      .msg-editor{min-height:180px;border-top-left-radius:0;border-top-right-radius:0}
+      .msg-compose-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
       @media (max-width:1040px){
         .kpis,.msg-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
         .filters{grid-template-columns:1fr 1fr}
@@ -179,24 +184,7 @@
             <div class="pager"><button id="msgPrev">‹</button><span id="msgPageInfo"></span><button id="msgNext">›</button></div>
           </div>
 
-          <div class="compose">
-            <h4 style="margin:0">新增 / 編輯站內信（假資料）</h4>
-            <div class="form-grid">
-              <input id="composeSubject" placeholder="站內信主旨" />
-              <select id="composeStatus"><option value="sent">已發送</option><option value="scheduled">預約中</option><option value="draft">草稿</option></select>
-              <textarea id="composeBody" placeholder="站內信內容"></textarea>
-              <div style="display:grid;gap:8px;">
-                <input id="composeCreator" placeholder="建立者（例：lvd_rjin_w）" value="lvd_rjin_w" />
-                <input id="composeModifier" placeholder="修改者（例：lvd_rjin_w）" value="lvd_rjin_w" />
-                <input id="composeSentCount" type="number" min="0" placeholder="已發送人數" value="0" />
-                <input id="composeSendAt" type="datetime-local" />
-              </div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;">
-              <button id="composeClear" class="secondary">清空</button>
-              <button id="composeSend">儲存站內信</button>
-            </div>
-          </div>
+          <div class="help" style="margin-top:10px;">點「新增站內信」會開啟彈窗（樣式對齊原型）。</div>
         </section>
       </section>
     </div>
@@ -217,6 +205,56 @@
           <input id="f_ltv" type="number" placeholder="LTV" /><input id="f_points" type="number" placeholder="點數" />
         </div>
         <div class="actions"><button id="cancelEdit" class="secondary">取消</button><button id="saveEdit">儲存</button></div>
+      </div>
+    </div>
+
+    <div class="modal-mask" id="msgComposeMask">
+      <div class="modal msg-compose-modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">新增站內信</h3>
+          <button id="composeClose" class="ghost" style="height:30px;">✕</button>
+        </div>
+        <div class="help" style="margin:8px 0 12px;">欄位與流程參考你提供的原型彈窗。</div>
+
+        <label class="help">*站內信主旨</label>
+        <input id="composeSubject" placeholder="請輸入站內信主旨" />
+
+        <label class="help" style="margin-top:8px;">*站內信內容</label>
+        <div class="msg-editor-toolbar">B / I / U · 字體 · 對齊 · 連結 · 圖片（示意工具列）</div>
+        <textarea id="composeBody" class="msg-editor" placeholder="請輸入站內信內容"></textarea>
+
+        <div class="msg-compose-grid" style="margin-top:10px;">
+          <div>
+            <label class="help">發送對象</label>
+            <select id="composeTarget"><option value="all">全部代理</option><option value="level">指定會員等級</option><option value="member">指定會員</option></select>
+          </div>
+          <div>
+            <label class="help">發送時間</label>
+            <select id="composeSendMode"><option value="immediate">立即發送</option><option value="schedule">預約發送</option><option value="draft">儲存草稿</option></select>
+          </div>
+          <div>
+            <label class="help">建立者</label>
+            <input id="composeCreator" value="lvd_rjin_w" />
+          </div>
+          <div>
+            <label class="help">修改者</label>
+            <input id="composeModifier" value="lvd_rjin_w" />
+          </div>
+          <div>
+            <label class="help">已發送人數</label>
+            <input id="composeSentCount" type="number" min="0" value="0" />
+          </div>
+          <div>
+            <label class="help">預約發送時間</label>
+            <input id="composeSendAt" type="datetime-local" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="composeClear" class="secondary">取消</button>
+          <button id="composeSaveDraft" class="ghost">儲存草稿</button>
+          <button id="composeSend">立即發送</button>
+        </div>
       </div>
     </div>
 
@@ -292,7 +330,10 @@
         msgKpis:$('msgKpis'), msgStatusFilter:$('msgStatusFilter'), msgCreator:$('msgCreator'), msgTimeType:$('msgTimeType'), msgRangeStart:$('msgRangeStart'), msgRangeEnd:$('msgRangeEnd'),
         msgSearch:$('msgSearch'), msgReset:$('msgReset'), msgCreate:$('msgCreate'), msgBatchDelete:$('msgBatchDelete'), msgCheckAll:$('msgCheckAll'), msgRows:$('msgRows'),
         msgSummary:$('msgSummary'), msgPageInfo:$('msgPageInfo'), msgPrev:$('msgPrev'), msgNext:$('msgNext'),
-        composeSubject:$('composeSubject'), composeStatus:$('composeStatus'), composeBody:$('composeBody'), composeCreator:$('composeCreator'), composeModifier:$('composeModifier'), composeSentCount:$('composeSentCount'), composeSendAt:$('composeSendAt'), composeClear:$('composeClear'), composeSend:$('composeSend')
+        msgComposeMask:$('msgComposeMask'), composeClose:$('composeClose'),
+        composeSubject:$('composeSubject'), composeBody:$('composeBody'), composeTarget:$('composeTarget'), composeSendMode:$('composeSendMode'),
+        composeCreator:$('composeCreator'), composeModifier:$('composeModifier'), composeSentCount:$('composeSentCount'), composeSendAt:$('composeSendAt'),
+        composeClear:$('composeClear'), composeSaveDraft:$('composeSaveDraft'), composeSend:$('composeSend')
       };
 
       const fmtDate = d => d.toISOString().slice(0,10);
@@ -527,11 +568,13 @@
           state.editingMsgId = m.id;
           el.composeSubject.value = m.subject;
           el.composeBody.value = m.body;
-          el.composeStatus.value = m.status;
+          el.composeSendMode.value = m.status === 'draft' ? 'draft' : (m.status === 'scheduled' ? 'schedule' : 'immediate');
+          el.composeTarget.value = 'all';
           el.composeCreator.value = m.creator || 'lvd_rjin_w';
           el.composeModifier.value = 'lvd_rjin_w';
           el.composeSentCount.value = Number(m.sentCount || 0);
           el.composeSendAt.value = m.sentAt ? new Date(m.sentAt.getTime() - m.sentAt.getTimezoneOffset()*60000).toISOString().slice(0,16) : '';
+          el.msgComposeMask.classList.add('show');
         }
         const msgDel = e.target.closest('.msg-del');
         if(msgDel){
@@ -569,43 +612,54 @@
       });
       el.msgCreate.addEventListener('click',()=>{
         state.editingMsgId = null;
-        el.composeSubject.value=''; el.composeBody.value=''; el.composeStatus.value='sent'; el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+        el.composeSubject.value=''; el.composeBody.value=''; el.composeSendMode.value='immediate'; el.composeTarget.value='all';
+        el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+        el.msgComposeMask.classList.add('show');
       });
 
       el.composeClear.addEventListener('click',()=>{
         state.editingMsgId = null;
-        el.composeSubject.value=''; el.composeBody.value=''; el.composeStatus.value='sent'; el.composeCreator.value='lvd_rjin_w'; el.composeModifier.value='lvd_rjin_w'; el.composeSentCount.value='0'; el.composeSendAt.value='';
+        el.msgComposeMask.classList.remove('show');
       });
+      el.composeClose.addEventListener('click',()=> el.msgComposeMask.classList.remove('show'));
 
-      el.composeSend.addEventListener('click',()=>{
+      function saveCompose(forceDraft=false){
         const subject = el.composeSubject.value.trim();
         const body = el.composeBody.value.trim();
         if(!subject || !body) return alert('請填寫站內信主旨與內容');
+
+        const mode = forceDraft ? 'draft' : el.composeSendMode.value;
+        const status = mode === 'draft' ? 'draft' : (mode === 'schedule' ? 'scheduled' : 'sent');
+
         const payload = {
           id: state.editingMsgId || `MSG${10000 + Math.floor(Math.random()*90000)}`,
           subject,
           body,
-          status: el.composeStatus.value,
+          status,
           sentCount: Number(el.composeSentCount.value || 0),
           creator: el.composeCreator.value.trim() || 'lvd_rjin_w',
           modifier: el.composeModifier.value.trim() || 'lvd_rjin_w',
           createdAt: new Date(),
-          sentAt: el.composeSendAt.value ? new Date(el.composeSendAt.value) : null,
+          sentAt: mode === 'schedule' ? (el.composeSendAt.value ? new Date(el.composeSendAt.value) : null) : (mode === 'immediate' ? new Date() : null),
           toId: '-',
-          toName: '全部代理',
+          toName: el.composeTarget.value === 'all' ? '全部代理' : (el.composeTarget.value === 'level' ? '指定等級' : '指定會員'),
           deleted: false
         };
+
         const idx = messages.findIndex(x=>x.id===payload.id);
         if(idx>=0){
           messages[idx] = { ...messages[idx], ...payload, createdAt: messages[idx].createdAt };
         } else {
-          if(payload.status==='sent' && !payload.sentAt) payload.sentAt = new Date();
           messages.unshift(payload);
         }
         state.editingMsgId = null;
         el.composeSubject.value=''; el.composeBody.value='';
+        el.msgComposeMask.classList.remove('show');
         renderMessages();
-      });
+      }
+
+      el.composeSaveDraft.addEventListener('click',()=> saveCompose(true));
+      el.composeSend.addEventListener('click',()=> saveCompose(false));
 
       renderLevels(); renderMembers(); renderMessages();
     </script>
