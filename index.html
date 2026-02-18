@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM 後台 - 會員資料頁</title>
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --card: #ffffff;
+        --text: #0f172a;
+        --soft: #64748b;
+        --line: #dbe3ef;
+        --primary: #2563eb;
+        --good: #059669;
+        --warn: #d97706;
+        --bad: #dc2626;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, "Noto Sans TC", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .title { margin: 0 0 14px; font-size: 1.5rem; }
+      .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 14px; }
+      .kpi {
+        background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+      }
+      .kpi .l { color: var(--soft); font-size: .85rem; }
+      .kpi .v { margin-top: 6px; font-size: 1.3rem; font-weight: 800; }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      input, select, button {
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        padding: 0 10px;
+        font: inherit;
+      }
+      button { background: var(--primary); color: #fff; border: none; cursor: pointer; }
+      button.secondary { background: #475569; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td {
+        text-align: left;
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--line);
+        font-size: .92rem;
+      }
+      th { color: var(--soft); font-weight: 700; }
+      .tag {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 700;
+      }
+      .tier-gold { background: #fef3c7; color: #92400e; }
+      .tier-silver { background: #e2e8f0; color: #334155; }
+      .tier-bronze { background: #ffedd5; color: #9a3412; }
+
+      .status-active { color: var(--good); font-weight: 700; }
+      .status-inactive { color: var(--bad); font-weight: 700; }
+      .status-pending { color: var(--warn); font-weight: 700; }
+
+      .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; color: var(--soft); }
+      .pager { display: flex; gap: 8px; align-items: center; }
+      .pager button { width: 34px; height: 34px; padding: 0; }
+
+      @media (max-width: 960px) {
+        .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .filters { grid-template-columns: 1fr 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 class="title">CRM 後台 - 會員資料頁</h1>
+
+      <section class="kpis" id="kpis"></section>
+
+      <section class="panel">
+        <div class="filters">
+          <input id="q" placeholder="搜尋：姓名 / Email / 電話 / 會員編號" />
+          <select id="tier">
+            <option value="">會員等級（全部）</option>
+            <option value="Gold">Gold</option>
+            <option value="Silver">Silver</option>
+            <option value="Bronze">Bronze</option>
+          </select>
+          <select id="status">
+            <option value="">狀態（全部）</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Pending">Pending</option>
+          </select>
+          <select id="channel">
+            <option value="">來源渠道（全部）</option>
+            <option value="Ads">Ads</option>
+            <option value="Organic">Organic</option>
+            <option value="Referral">Referral</option>
+            <option value="Event">Event</option>
+          </select>
+          <select id="sort">
+            <option value="created_desc">註冊時間：新到舊</option>
+            <option value="created_asc">註冊時間：舊到新</option>
+            <option value="ltv_desc">LTV：高到低</option>
+            <option value="points_desc">點數：高到低</option>
+          </select>
+          <button id="reset" class="secondary">重設</button>
+        </div>
+
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>會員編號</th>
+                <th>姓名</th>
+                <th>Email / 電話</th>
+                <th>等級</th>
+                <th>狀態</th>
+                <th>來源</th>
+                <th>總消費(LTV)</th>
+                <th>點數</th>
+                <th>註冊日</th>
+                <th>最後登入</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="toolbar">
+          <div id="summary"></div>
+          <div class="pager">
+            <button id="prev">‹</button>
+            <span id="pageInfo"></span>
+            <button id="next">›</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const members = [
+        ...Array.from({ length: 48 }).map((_, i) => {
+          const tiers = ["Gold", "Silver", "Bronze"];
+          const statuses = ["Active", "Inactive", "Pending"];
+          const channels = ["Ads", "Organic", "Referral", "Event"];
+          const first = ["王", "李", "陳", "林", "張", "黃", "吳", "劉"][i % 8];
+          const last = ["小安", "佳穎", "志明", "怡君", "柏翰", "雅婷", "家豪", "詩涵"][i % 8];
+          const created = new Date(2024, (i * 3) % 12, (i * 7) % 27 + 1);
+          const lastLogin = new Date(2025, (i * 5) % 12, (i * 11) % 27 + 1);
+          return {
+            id: `M${String(10001 + i)}`,
+            name: first + last,
+            email: `member${i + 1}@demo-crm.com`,
+            phone: `09${String(10000000 + i * 97).slice(0, 8)}`,
+            tier: tiers[i % 3],
+            status: statuses[i % 3],
+            channel: channels[i % 4],
+            ltv: 800 + (i * 137) % 25000,
+            points: (i * 83) % 9800,
+            createdAt: created,
+            lastLoginAt: lastLogin,
+          };
+        })
+      ];
+
+      const state = { page: 1, pageSize: 10 };
+      const el = {
+        q: document.getElementById('q'),
+        tier: document.getElementById('tier'),
+        status: document.getElementById('status'),
+        channel: document.getElementById('channel'),
+        sort: document.getElementById('sort'),
+        rows: document.getElementById('rows'),
+        summary: document.getElementById('summary'),
+        pageInfo: document.getElementById('pageInfo'),
+        prev: document.getElementById('prev'),
+        next: document.getElementById('next'),
+        reset: document.getElementById('reset'),
+        kpis: document.getElementById('kpis'),
+      };
+
+      const fmtDate = d => d.toISOString().slice(0,10);
+      const fmtMoney = n => `NT$ ${n.toLocaleString()}`;
+
+      function kpiCards(list) {
+        const active = list.filter(m => m.status === 'Active').length;
+        const totalLtv = list.reduce((a,b)=>a+b.ltv,0);
+        const avgLtv = list.length ? Math.round(totalLtv/list.length) : 0;
+        const gold = list.filter(m => m.tier === 'Gold').length;
+        el.kpis.innerHTML = `
+          <div class="kpi"><div class="l">會員總數</div><div class="v">${list.length}</div></div>
+          <div class="kpi"><div class="l">活躍會員</div><div class="v">${active}</div></div>
+          <div class="kpi"><div class="l">平均 LTV</div><div class="v">${fmtMoney(avgLtv)}</div></div>
+          <div class="kpi"><div class="l">Gold 會員</div><div class="v">${gold}</div></div>
+        `;
+      }
+
+      function getFiltered() {
+        const q = el.q.value.trim().toLowerCase();
+        let list = members.filter(m => {
+          const matchQ = !q || `${m.id} ${m.name} ${m.email} ${m.phone}`.toLowerCase().includes(q);
+          const matchTier = !el.tier.value || m.tier === el.tier.value;
+          const matchStatus = !el.status.value || m.status === el.status.value;
+          const matchChannel = !el.channel.value || m.channel === el.channel.value;
+          return matchQ && matchTier && matchStatus && matchChannel;
+        });
+
+        const sort = el.sort.value;
+        list.sort((a,b) => {
+          if (sort === 'created_desc') return b.createdAt - a.createdAt;
+          if (sort === 'created_asc') return a.createdAt - b.createdAt;
+          if (sort === 'ltv_desc') return b.ltv - a.ltv;
+          if (sort === 'points_desc') return b.points - a.points;
+          return 0;
+        });
+        return list;
+      }
+
+      function render() {
+        const list = getFiltered();
+        const total = list.length;
+        const pages = Math.max(1, Math.ceil(total / state.pageSize));
+        if (state.page > pages) state.page = pages;
+
+        const start = (state.page - 1) * state.pageSize;
+        const pageItems = list.slice(start, start + state.pageSize);
+
+        kpiCards(list);
+
+        el.rows.innerHTML = pageItems.map(m => `
+          <tr>
+            <td>${m.id}</td>
+            <td>${m.name}</td>
+            <td>${m.email}<br/><span style="color:var(--soft)">${m.phone}</span></td>
+            <td><span class="tag tier-${m.tier.toLowerCase()}">${m.tier}</span></td>
+            <td><span class="status-${m.status.toLowerCase()}">${m.status}</span></td>
+            <td>${m.channel}</td>
+            <td>${fmtMoney(m.ltv)}</td>
+            <td>${m.points.toLocaleString()}</td>
+            <td>${fmtDate(m.createdAt)}</td>
+            <td>${fmtDate(m.lastLoginAt)}</td>
+          </tr>
+        `).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--soft)">查無資料</td></tr>`;
+
+        el.summary.textContent = `共 ${total} 筆，顯示 ${total ? start + 1 : 0}-${Math.min(start + state.pageSize, total)} 筆`;
+        el.pageInfo.textContent = `${state.page} / ${pages}`;
+        el.prev.disabled = state.page <= 1;
+        el.next.disabled = state.page >= pages;
+      }
+
+      [el.q, el.tier, el.status, el.channel, el.sort].forEach(x =>
+        x.addEventListener('input', () => { state.page = 1; render(); })
+      );
+      el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; render(); } });
+      el.next.addEventListener('click', () => { state.page++; render(); });
+      el.reset.addEventListener('click', () => {
+        el.q.value = '';
+        el.tier.value = '';
+        el.status.value = '';
+        el.channel.value = '';
+        el.sort.value = 'created_desc';
+        state.page = 1;
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
